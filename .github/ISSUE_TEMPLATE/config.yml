@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Documentation
+    url: https://opsingh861.github.io/nCode/
+    about: Browse the full project documentation
+
+  - name: Discussions — Q&A
+    url: https://github.com/opsingh861/nCode/discussions/categories/q-a
+    about: Ask a question or get help using nCode
+
+  - name: Discussions — Ideas
+    url: https://github.com/opsingh861/nCode/discussions/categories/ideas
+    about: Share ideas that are not yet ready for a formal feature request

@@ -1,0 +1,66 @@
+name: Node Handler Request
+description: Request support for a new n8n node type
+title: "[Node Handler]: n8n-nodes-base.<node-type>"
+labels: ["node-handler", "enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Request support for transpiling a new n8n node type into Python.
+        Check the [Supported Nodes](https://opsingh861.github.io/nCode/node-handlers/) list first — the node may already be supported.
+
+  - type: input
+    id: node-type
+    attributes:
+      label: n8n node type string
+      description: The exact node type identifier, e.g. `n8n-nodes-base.slack` or `@n8n/n8n-nodes-langchain.openAi`.
+      placeholder: "n8n-nodes-base.slack"
+    validations:
+      required: true
+
+  - type: input
+    id: node-name
+    attributes:
+      label: Human-readable node name
+      description: How this node appears in the n8n UI.
+      placeholder: "Slack"
+    validations:
+      required: true
+
+  - type: textarea
+    id: operations
+    attributes:
+      label: Operations to support
+      description: List the specific operations you need (e.g. "send message", "create channel"). Check the n8n docs.
+      placeholder: |
+        - send message to a channel
+        - send direct message
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-python
+    attributes:
+      label: Expected Python output (optional)
+      description: |
+        If you have an idea of what the generated Python should look like, paste a snippet here.
+        This helps contributors understand the intent.
+      render: python
+
+  - type: textarea
+    id: workflow-example
+    attributes:
+      label: Sample workflow JSON (optional)
+      description: A minimal n8n workflow JSON that uses this node. Paste directly or link to a Gist.
+      placeholder: https://gist.github.com/...
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this node is not already requested
+          required: true
+        - label: I am willing to help implement or test this handler

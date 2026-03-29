@@ -1,0 +1,80 @@
+title: nCode
+description: >-
+  Convert n8n workflows to clean, production-ready Python code.
+  FastAPI backend · React frontend · Modular transpiler pipeline.
+
+url: "https://opsingh861.github.io"
+baseurl: "/nCode"
+
+# Theme — just-the-docs is the industry standard for technical documentation
+remote_theme: just-the-docs/just-the-docs@v0.10.0
+
+# Logo & favicon
+# logo: "/assets/images/logo.png"
+
+# Color scheme (light is fine; "dark" also supported)
+color_scheme: light
+
+# Callouts
+callouts:
+  note:
+    title: Note
+    color: blue
+  warning:
+    title: Warning
+    color: yellow
+  highlight:
+    title: Tip
+    color: green
+
+# Navigation order
+nav_sort: case_insensitive
+
+# Search
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+  preview_words_before: 5
+  preview_words_after: 10
+  tokenizer_separator: /[\s/]+/
+  rel_url: true
+  button: false
+
+# Aux nav links (top-right corner)
+aux_links:
+  "GitHub":
+    - "https://github.com/opsingh861/nCode"
+
+aux_links_new_tab: true
+
+# Footer
+footer_content: >
+  Released under the <a href="https://github.com/opsingh861/nCode/blob/main/LICENSE">MIT License</a>.
+  Built with <a href="https://jekyllrb.com">Jekyll</a> &amp; 
+  <a href="https://just-the-docs.com">Just the Docs</a>.
+
+back_to_top: true
+back_to_top_text: "Back to top"
+
+last_edit_timestamp: true
+last_edit_time_format: "%b %e %Y"
+
+# GitHub edit link
+gh_edit_link: true
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: "https://github.com/opsingh861/nCode"
+gh_edit_branch: "main"
+gh_edit_source: docs
+gh_edit_view_mode: "edit"
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-remote-theme
+
+# Exclude from build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - "*.gem"

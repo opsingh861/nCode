@@ -2,9 +2,14 @@
 
 > Convert n8n workflows to clean, runnable Python code
 
+[![CI](https://github.com/opsingh861/nCode/actions/workflows/ci.yml/badge.svg)](https://github.com/opsingh861/nCode/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/opsingh861/nCode/actions/workflows/codeql.yml/badge.svg)](https://github.com/opsingh861/nCode/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)
 ![Status](https://img.shields.io/badge/Status-Active-success)
+
+**[📖 Documentation](https://opsingh861.github.io/nCode/)** · [Report a Bug](https://github.com/opsingh861/nCode/issues/new?template=bug_report.yml) · [Request a Feature](https://github.com/opsingh861/nCode/issues/new?template=feature_request.yml)
 
 ## Features
 
