@@ -464,7 +464,7 @@ class PostgresToolHandler:
         # Replace n8n $fromAI() expressions with a {sql_statement} placeholder
         import re as _re
 
-        query_clean = _re.sub(r"\{\{.*?\}\}", "{sql_statement}", query)
+        query = _re.sub(r"\{\{.*?\}\}", "{sql_statement}", query)
 
         code_lines = [
             f"# PostgreSQL Tool: {node.name!r} — wraps Postgres query as a LangChain tool",

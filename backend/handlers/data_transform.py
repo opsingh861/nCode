@@ -8,7 +8,6 @@ Extract from File, DateTime, HTML, XML, Crypto, Markdown, Execute Command.
 from __future__ import annotations
 
 import re
-from typing import Any
 
 from backend.core.ir import IRNode, IRNodeKind
 from backend.handlers.base import GenerationContext
@@ -193,7 +192,6 @@ class SortNodeHandler:
         code_lines = [f"# Sort node: {node.name!r}"]
 
         if sort_list and isinstance(sort_list, list):
-            key_expr_parts = []
             for sf in reversed(sort_list):
                 if not isinstance(sf, dict):
                     continue
@@ -912,7 +910,6 @@ class MarkdownHandler:
 class ExecuteCommandHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
         var = _safe_var(node.name)
-        prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
         params = node.parameters
 

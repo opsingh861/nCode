@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 
 from backend.core.ir import IRNode, IRNodeKind
-from backend.handlers.base import GenerationContext, NodeHandler
+from backend.handlers.base import GenerationContext
 from backend.handlers.registry import register
 from backend.models.workflow import N8nNode
 

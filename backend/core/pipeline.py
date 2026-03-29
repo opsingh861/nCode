@@ -32,11 +32,7 @@ from backend.core.expression_engine import VariableContext
 from backend.core.graph import (
     AI_CONNECTION_TYPES,
     build_dag,
-    classify_node,
-    find_merge_point,
     get_ai_sub_nodes,
-    get_branch_subgraph,
-    get_merge_input_vars,
     topological_order,
 )
 from backend.core.ir import IRNode, IRNodeKind, IRProgram
@@ -124,7 +120,6 @@ def run_pipeline(raw: str | dict[str, Any]) -> PipelineResult:
             continue
 
         n8n_node = node_map[node_name]
-        node_type_lower = n8n_node.type.lower()
 
         # Skip disabled nodes
         if n8n_node.disabled:

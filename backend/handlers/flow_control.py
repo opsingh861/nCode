@@ -5,8 +5,6 @@ from __future__ import annotations
 import re
 from typing import Any
 
-import networkx as nx
-
 from backend.core.ir import IRNode, IRNodeKind
 from backend.handlers.base import GenerationContext
 from backend.handlers.registry import register

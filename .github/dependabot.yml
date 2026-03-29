@@ -16,7 +16,6 @@ updates:
       include: "scope"
     allow:
       - dependency-type: "all"
-    ignore: []
 
   # Backend dependencies (Python)
   - package-ecosystem: pip
@@ -33,7 +32,6 @@ updates:
       include: "scope"
     allow:
       - dependency-type: "all"
-    ignore: []
 
   # Docker and docker-compose
   - package-ecosystem: docker

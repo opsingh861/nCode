@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from backend.core.ir import IRNode, IRNodeKind
-from backend.handlers.base import GenerationContext, NodeHandler
+from backend.handlers.base import GenerationContext
 from backend.handlers.registry import register
 from backend.models.workflow import N8nNode
 
@@ -34,7 +34,6 @@ class HttpRequestHandler:
 
         # Auth configuration
         auth_type = str(params.get("authentication", "none")).lower()
-        credentials = node.credentials or {}
 
         # Headers
         headers_spec = params.get("headerParameters", {})
@@ -95,7 +94,6 @@ class HttpRequestHandler:
 
         # Add auth headers
         if auth_type in ("basicauth", "basic"):
-            user_cred = credentials.get("httpBasicAuth", {})
             code_lines += [
                 f"import os",
                 f'{var}_auth = (os.environ.get("HTTP_BASIC_USER", ""), os.environ.get("HTTP_BASIC_PASS", ""))',

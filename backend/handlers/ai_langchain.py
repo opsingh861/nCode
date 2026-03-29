@@ -415,7 +415,6 @@ class BasicLlmChainHandler:
         params = node.parameters
 
         llm_nodes = _get_sub_nodes(ctx, "ai_languageModel")
-        output_parser_nodes = _get_sub_nodes(ctx, "ai_outputParser")
         llm_var, llm_lines, llm_pkgs = _emit_llm_init(llm_nodes, ctx)
 
         prompt_text = ctx.resolve_expr(
@@ -525,10 +524,8 @@ class QaChainHandler:
         var = _safe_var(node.name)
         prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
-        params = node.parameters
 
         llm_nodes = _get_sub_nodes(ctx, "ai_languageModel")
-        retriever_nodes = _get_sub_nodes(ctx, "ai_retriever")
         llm_var, llm_lines, llm_pkgs = _emit_llm_init(llm_nodes, ctx)
 
         code_lines = llm_lines + [

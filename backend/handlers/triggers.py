@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 
 from backend.core.ir import IRNode, IRNodeKind
-from backend.handlers.base import GenerationContext, NodeHandler
+from backend.handlers.base import GenerationContext
 from backend.handlers.registry import register
 from backend.models.workflow import N8nNode
 
@@ -197,8 +197,6 @@ class WebhookTriggerHandler:
         )
         path_raw = str(params.get("path", "") or _safe_var(node.name))
         path = _safe_path(path_raw)
-        response_mode = params.get("responseMode", "lastNode")
-        response_data = params.get("responseData", "firstEntryJson")
 
         code_lines = [
             f'@app.{method}("/{path}")',

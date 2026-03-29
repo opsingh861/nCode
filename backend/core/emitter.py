@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from textwrap import indent
-from typing import Union
 
 from backend.core.ir import IRNode, IRNodeKind, IRProgram
 

@@ -12,7 +12,7 @@ from backend.core.graph import (
     has_cycle,
     topological_order,
 )
-from backend.models.workflow import N8nConnectionTarget, N8nNode, N8nWorkflow
+from backend.models.workflow import N8nWorkflow
 
 # ---------------------------------------------------------------------------
 # Workflow fixture helpers

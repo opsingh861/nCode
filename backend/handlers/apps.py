@@ -88,7 +88,6 @@ class SlackHandler:
 class TelegramHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
         var = _safe_var(node.name)
-        prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
         params = node.parameters
 
@@ -780,8 +779,6 @@ class StickyNoteHandler:
     """Sticky notes are visual annotations; they emit only a comment."""
 
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
-        import re as _re
-
         var = _safe_var(node.name)
         prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
@@ -815,7 +812,6 @@ class StickyNoteHandler:
 class EmailSendHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
         var = _safe_var(node.name)
-        prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
         params = node.parameters
 
@@ -884,7 +880,6 @@ class EmailSendHandler:
 class RssFeedHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
         var = _safe_var(node.name)
-        prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
         params = node.parameters
 
@@ -927,16 +922,15 @@ class RssFeedHandler:
 class TypeformHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
         var = _safe_var(node.name)
-        prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
         params = node.parameters
 
-        form_id = ctx.resolve_expr(str(params.get("formId", "")))
+        form_id_expr = ctx.resolve_expr(str(params.get("formId", "")))
         code_lines = [
             f"import requests, os",
             f"_tf_token = os.environ.get('TYPEFORM_API_KEY', '')",
             f"_tf_resp = requests.get(",
-            f"    f'https://api.typeform.com/forms/{{form_id}}/responses',",
+            f"    f'https://api.typeform.com/forms/{{{form_id_expr}}}/responses',",
             f"    headers={{'Authorization': f'Bearer {{_tf_token}}'}}",
             f").json()",
             f"{var}_output = [{{'json': item}} for item in _tf_resp.get('items', [])]",

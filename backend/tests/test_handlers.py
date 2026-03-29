@@ -1,8 +1,5 @@
 """Tests for individual node handlers."""
 
-import pytest
-
-from backend.core.expression_engine import VariableContext
 from backend.core.ir import IRNodeKind
 from backend.handlers.ai_langchain import (
     AiAgentHandler,
@@ -17,7 +14,6 @@ from backend.handlers.http import HttpRequestHandler
 from backend.handlers.triggers import (
     ChatTriggerHandler,
     ManualTriggerHandler,
-    ScheduleTriggerHandler,
     WebhookTriggerHandler,
 )
 from backend.models.workflow import N8nNode
