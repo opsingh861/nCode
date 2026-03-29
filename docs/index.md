@@ -6,6 +6,10 @@ description: "nCode converts n8n workflow JSON into clean, production-ready Pyth
 permalink: /
 ---
 
+<p align="center">
+  <img src="assets/logo/ncode-primary.png" alt="nCode" width="400" />
+</p>
+
 # nCode
 {: .fs-9 }
 

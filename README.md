@@ -1,6 +1,10 @@
-# nCode
+<p align="center">
+  <img src="docs/assets/logo/ncode-readme-header.png" alt="nCode" width="600" />
+</p>
 
-Convert n8n workflow JSON into runnable Python projects.
+<p align="center">
+  <em>Convert n8n workflow JSON into runnable Python projects.</em>
+</p>
 
 [![CI](https://github.com/opsingh861/nCode/actions/workflows/ci.yml/badge.svg)](https://github.com/opsingh861/nCode/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/opsingh861/nCode/actions/workflows/codeql.yml/badge.svg)](https://github.com/opsingh861/nCode/actions/workflows/codeql.yml)

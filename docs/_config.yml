@@ -10,7 +10,7 @@ baseurl: "/nCode"
 remote_theme: just-the-docs/just-the-docs@v0.10.0
 
 # Logo & favicon
-# logo: "/assets/images/logo.png"
+logo: "/assets/logo/ncode-icon.png"
 
 # Color scheme (light is fine; "dark" also supported)
 color_scheme: light
