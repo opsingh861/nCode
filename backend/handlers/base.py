@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
 import networkx as nx
+
 from backend.core.expression_engine import VariableContext
 from backend.core.ir import IRNode
 from backend.models.workflow import N8nNode

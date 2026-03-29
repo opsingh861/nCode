@@ -2,6 +2,7 @@
 
 import networkx as nx
 import pytest
+
 from backend.core.graph import (
     build_dag,
     classify_node,
