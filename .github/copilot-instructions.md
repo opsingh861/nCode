@@ -41,6 +41,10 @@ Backend venv lives at `backend/.venv/`. `load_dotenv()` runs at startup; no requ
 
 Frontend lockfile note: keep `frontend/package-lock.json` tracked in git because CI uses `npm ci` and `actions/setup-node` npm cache keyed from that lockfile.
 
+Security/release note: backend dependency automation must target the repo root (`/`) because the canonical Python dependency file is the top-level `requirements.txt`, not `backend/requirements.txt`.
+
+Security note: backend CORS must use explicit origins from `CORS_ALLOW_ORIGINS` (comma-separated) or the local dev defaults; do not combine `allow_credentials=True` with wildcard origins.
+
 ## Adding a Handler
 
 1. Create or extend a file in `backend/handlers/`

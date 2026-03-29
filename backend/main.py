@@ -19,6 +19,7 @@ Design goals implemented here:
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import time
@@ -49,6 +50,8 @@ load_dotenv()
 UUID_REGEX = re.compile(
     r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
 )
+DEFAULT_CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+logger = logging.getLogger(__name__)
 
 
 def _read_int_env(var_name: str, default: int) -> int:
@@ -65,9 +68,16 @@ def _read_int_env(var_name: str, default: int) -> int:
     return parsed if parsed > 0 else default
 
 
+def _read_csv_env(var_name: str) -> list[str]:
+    """Read a comma-separated env var into a normalized string list."""
+    raw_value = os.getenv(var_name, "")
+    return [item.strip() for item in raw_value.split(",") if item.strip()]
+
+
 TEMP_DIR = Path(os.getenv("TEMP_DIR", "./tmp")).resolve()
 MAX_UPLOAD_SIZE_MB = _read_int_env("MAX_UPLOAD_SIZE_MB", 10)
 MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+CORS_ALLOW_ORIGINS = _read_csv_env("CORS_ALLOW_ORIGINS") or DEFAULT_CORS_ORIGINS
 
 
 def _sanitize_filename(value: str) -> str:
@@ -198,15 +208,15 @@ async def lifespan(_: FastAPI):
     _cleanup_expired_temp_files(TEMP_DIR, max_age_seconds=3600)
 
 
-app = FastAPI(title="nCode API", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="nCode API", version="1.0.1", lifespan=lifespan)
 
-# Development-friendly CORS policy for browser integration.
-# This is intentionally permissive and can be tightened later through env config.
+# Default to explicit local dev origins. Production deployments should override
+# these with a comma-separated CORS_ALLOW_ORIGINS environment variable.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=CORS_ALLOW_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -269,9 +279,8 @@ async def upload_workflow(file: UploadFile = File(...)) -> GenerateResponse:
     try:
         result = run_pipeline(workflow_dict)
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(
-            status_code=500, detail=f"Transpilation failed: {exc}"
-        ) from exc
+        logger.exception("Transpilation failed for workflow upload '%s'", workflow.name)
+        raise HTTPException(status_code=500, detail="Transpilation failed") from exc
 
     generated_code = result.generated_code
     requirements_content = result.requirements_txt or ""

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-03-29
+
+### Security
+- Tightened backend CORS defaults to explicit development origins and added `CORS_ALLOW_ORIGINS` for deployment-specific allowlists
+- Stopped returning raw backend exception details from upload failures to avoid leaking internal error information
+- Upgraded `react-syntax-highlighter` to `16.1.1` to pull in a non-vulnerable PrismJS dependency chain
+- Fixed Dependabot's Python configuration to monitor the root `requirements.txt` file where backend dependencies are actually declared
+
+### Fixed
+- Aligned application version metadata for the v1.0.1 patch release
+
 ## [1.0.0] - 2026-03-29
 
 ### Added
@@ -45,4 +56,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Architecture**: Modular handler-based pipeline (parse → IR → emit → post-process)
 - **License**: MIT
 
+[1.0.1]: https://github.com/opsingh861/nCode/releases/tag/v1.0.1
 [1.0.0]: https://github.com/opsingh861/nCode/releases/tag/v1.0.0
