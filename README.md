@@ -1,6 +1,6 @@
 # nCode
 
-> Convert n8n workflows to clean, runnable Python code
+Convert n8n workflow JSON into runnable Python projects.
 
 [![CI](https://github.com/opsingh861/nCode/actions/workflows/ci.yml/badge.svg)](https://github.com/opsingh861/nCode/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/opsingh861/nCode/actions/workflows/codeql.yml/badge.svg)](https://github.com/opsingh861/nCode/actions/workflows/codeql.yml)
@@ -9,173 +9,222 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
-**[📖 Documentation](https://opsingh861.github.io/nCode/)** · [Report a Bug](https://github.com/opsingh861/nCode/issues/new?template=bug_report.yml) · [Request a Feature](https://github.com/opsingh861/nCode/issues/new?template=feature_request.yml)
+[Documentation](https://opsingh861.github.io/nCode/) · [Report a Bug](https://github.com/opsingh861/nCode/issues/new?template=bug_report.yml) · [Request a Feature](https://github.com/opsingh861/nCode/issues/new?template=feature_request.yml)
 
-## Features
+## Why nCode
 
-- Upload n8n workflow JSON and validate schema with Pydantic.
-- Auto-transpile workflow nodes into runnable Python source.
-- Detect runtime mode automatically:
-  - **FastAPI mode** for webhook/chat triggers.
-  - **Standalone script mode** for manual/schedule/no-trigger workflows.
-- Generate downloadable ZIP project artifacts.
-- Keep credentials secure using generated `os.getenv(...)` placeholders and `.env.example`.
+nCode is an open-source transpiler that takes exported n8n workflows and generates a Python project you can run immediately.
+
+Key outcomes:
+
+- Converts n8n nodes into Python code with a deterministic pipeline.
+- Auto-detects output mode:
+  - FastAPI mode for webhook/chat-triggered workflows.
+  - Script mode for manual/schedule or non-HTTP workflows.
+- Generates project artifacts you can run/share:
+  - `main.py`
+  - `requirements.txt`
+  - `.env.example`
+  - `README.md`
+  - `workflow_meta.json`
+- Preserves unsupported nodes as explicit TODO stubs instead of failing the full generation.
+
+## Architecture at a Glance
+
+Backend pipeline flow:
+
+1. Parse JSON into Pydantic models.
+2. Build a DAG from workflow nodes and connections.
+3. Topologically order executable nodes.
+4. Detect output mode (`fastapi` or `script`) from trigger node types.
+5. Dispatch per-node handlers to emit IR.
+6. Emit Python source from IR.
+7. Run post-processing (black + isort + syntax checks).
+
+Core folders:
+
+- `backend/core/`: graph, IR, expression translation, emitter, pipeline.
+- `backend/handlers/`: one handler class per node type family.
+- `backend/models/`: request/response and workflow Pydantic models.
+- `backend/routers/`: FastAPI router endpoints.
+- `frontend/src/`: React + Vite user interface.
+- `docs/`: project documentation site content.
 
 ## Supported Node Types
 
-Status key:
-- **Full**: concrete Python generation is implemented.
-- **Partial**: generates code, but may include TODO/manual translation sections.
-- **Stub**: placeholder TODO/pass-through output.
+The registry currently exposes **107** supported node-type strings (including aliases and specialized LangChain node types).
 
-| Node Type | Status | Generated Code |
-|---|---|---|
-| `n8n-nodes-base.httpRequest` | Full | `requests.request(...)` with method/url, headers, query params, optional body, auth/env token fallback, JSON/text response handling |
-| `n8n-nodes-base.httprequest` | Full | Alias of HTTP Request handler |
-| `n8n-nodes-base.HttpRequest` | Full | Alias of HTTP Request handler |
-| `n8n-nodes-base.set` | Full | Builds item JSON payload from assignments (manual mode) with raw mode fallback |
-| `n8n-nodes-base.if` | Full | Condition expression generation with true/false branch item outputs |
-| `n8n-nodes-base.code` | Partial | Passes through Python code if present; comments JS code with TODO for manual conversion |
-| `n8n-nodes-base.merge` | Stub | TODO scaffold + pass-through items |
-| `n8n-nodes-base.itemLists` | Stub | TODO scaffold + pass-through items |
-| `n8n-nodes-base.itemlists` | Stub | Alias of Item Lists handler |
-| `n8n-nodes-base.splitInBatches` | Stub | Alias to Item Lists stub handler |
-| `n8n-nodes-base.splitinbatches` | Stub | Alias to Item Lists stub handler |
-| `n8n-nodes-base.webhook` | Full | FastAPI route trigger scaffold (`@app.<method>("/<path>")`) with payload/query extraction |
-| `n8n-nodes-base.scheduleTrigger` | Partial | Script entrypoint scaffold with schedule metadata comments |
-| `n8n-nodes-base.scheduletrigger` | Partial | Alias of schedule trigger handler |
-| `n8n-nodes-base.manualTrigger` | Partial | Script entrypoint scaffold (`run_workflow`) with initialized items |
-| `n8n-nodes-base.manualtrigger` | Partial | Alias of manual trigger handler |
-| `@n8n/n8n-nodes-langchain.chatTrigger` | Full | FastAPI chat route scaffold with message extraction |
-| `@n8n/n8n-nodes-langchain.chattrigger` | Full | Alias of chat trigger handler |
-| `n8n-nodes-base.postgres` | Stub | TODO scaffold with operation + credential env placeholder |
-| `n8n-nodes-base.mySql` | Stub | TODO scaffold with operation + credential env placeholder |
-| `n8n-nodes-base.mysql` | Stub | Alias of MySQL stub handler |
-| `n8n-nodes-base.mongoDb` | Stub | TODO scaffold with operation + credential env placeholder |
-| `n8n-nodes-base.mongodb` | Stub | Alias of MongoDB stub handler |
-| `@n8n/n8n-nodes-langchain.openAi` | Stub | TODO scaffold for OpenAI model/operation |
-| `@n8n/n8n-nodes-langchain.openai` | Stub | Alias of OpenAI stub handler |
+For the exact runtime list in your local checkout:
 
-Notes:
-- Additional `@n8n/n8n-nodes-langchain.*` and AI-like types are routed to generic AI/LangChain fallback handlers.
-- Unsupported node types are preserved as explicit TODO blocks so generated workflows remain runnable.
+- Use API endpoint: `GET /api/supported-nodes`
+- Or inspect handlers under `backend/handlers/`
+
+Design principle:
+
+- Supported nodes generate concrete Python blocks.
+- Unsupported nodes still produce runnable pass-through stubs with TODO comments.
+
+## Prerequisites
+
+- Python 3.10+
+- Node.js 18+
+- Docker 24+ (optional)
 
 ## Quick Start
 
+### Option 1: Local development
+
 ```bash
-cd n8n2py
+git clone https://github.com/opsingh861/nCode.git
+cd nCode
+
+# Backend environment
+cd backend
 python -m venv .venv
-# Windows (PowerShell):
+
+# Windows PowerShell
 .\.venv\Scripts\Activate.ps1
-# Unix/macOS (bash/zsh):
+
+# macOS/Linux
 # source .venv/bin/activate
 
+cd ..
 pip install -r requirements.txt
-cp .env.example .env
-uvicorn backend.main:app --reload
+
+# Optional environment customization
+# Windows PowerShell: Copy-Item .env.example .env
+# macOS/Linux: cp .env.example .env
+
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-> Using a project-local virtual environment (like `.venv`) keeps dependencies isolated from your global Python installation and avoids version conflicts.
+Open API docs at `http://localhost:8000/docs`.
+
+### Option 2: Full stack dev helper script
+
+From repo root:
+
+```bash
+./run-dev.sh
+```
+
+This starts:
+
+- backend at `http://0.0.0.0:8000`
+- frontend at `http://localhost:3000`
+
+Note: the script expects backend Python at `backend/.venv/Scripts/python.exe`.
+
+### Option 3: Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Services:
+
+- frontend: `http://localhost:3000`
+- backend API: `http://localhost:8000`
+- OpenAPI docs: `http://localhost:8000/docs`
 
 ## API Reference
 
-| Method | Endpoint | Description |
+### Primary endpoints
+
+| Method | Endpoint | Purpose |
 |---|---|---|
 | `GET` | `/` | Health check |
-| `POST` | `/api/upload` | Upload n8n workflow JSON, transpile to Python, return preview + `download_id` |
-| `GET` | `/api/download/{id}` | Download generated ZIP artifact for the given `download_id` |
-| `GET` | `/api/supported-nodes` | List transpiler-supported node type strings |
+| `POST` | `/api/upload` | Upload `workflow.json`, run pipeline, return generated preview + `download_id` |
+| `GET` | `/api/download/{download_id}` | Download generated ZIP for a previous upload |
+| `POST` | `/api/generate` | Direct JSON transpilation endpoint (no multipart upload) |
+| `GET` | `/api/supported-nodes` | Get all registered node type strings |
 
 ### cURL examples
 
-Upload a workflow:
+Upload flow:
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/upload" \
-  -F "file=@workflow.json"
+curl -X POST "http://127.0.0.1:8000/api/upload" -F "file=@workflow.json"
 ```
 
-Download generated ZIP (replace with real ID from upload response):
+Download artifact:
 
 ```bash
 curl -L "http://127.0.0.1:8000/api/download/<download_id>" -o workflow_python.zip
 ```
 
+Direct JSON generate flow:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/generate" \
+  -H "Content-Type: application/json" \
+  --data @workflow.json
+```
+
+## Frontend
+
+The UI is built with React + TypeScript + Vite and proxies `/api` calls to `http://localhost:8000` in development.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Development and Contribution
+
+See `CONTRIBUTING.md` for full guidelines. Common local checks:
+
+```bash
+# Tests
+backend\.venv\Scripts\python.exe -m pytest backend/tests/ -v
+
+# Formatting checks (CI-aligned)
+backend\.venv\Scripts\python.exe -m black --check backend/
+backend\.venv\Scripts\python.exe -m isort --check-only --profile black backend/
+```
+
+### Adding a new node handler
+
+1. Create or update a handler file in `backend/handlers/`.
+2. Register node types with `@register("node.type")`.
+3. Implement the handler interface (`generate`, `supported_operations`, `required_packages`).
+4. Import the module in `backend/handlers/__init__.py` so registration runs.
+
+## Security Notes
+
+- Credentials are emitted as environment variable lookups (`os.getenv(...)`) rather than embedded secrets.
+- Upload flow enforces JSON extension and file size constraints.
+- Download IDs are UUID-validated to prevent path traversal.
+- Temporary artifact cleanup runs during app lifecycle shutdown.
+- CORS origins are explicit (configured by `CORS_ALLOW_ORIGINS` or safe local defaults).
+
 ## Project Structure
 
 ```text
-n8n2py/
-├── .env.example
-├── README.md
-├── requirements.txt
-├── backend/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── models.py
-│   ├── __pycache__/
-│   │   ├── __init__.cpython-314.pyc
-│   │   └── main.cpython-314.pyc
-│   └── transpiler/
-│       ├── __init__.py
-│       ├── core.py
-│       ├── utils.py
-│       ├── __pycache__/
-│       │   ├── __init__.cpython-314.pyc
-│       │   └── core.cpython-314.pyc
-│       └── node_handlers/
-│           ├── __init__.py
-│           ├── ai_nodes.py
-│           ├── data_nodes.py
-│           ├── db_nodes.py
-│           ├── http_nodes.py
-│           ├── trigger_nodes.py
-│           ├── utils.py
-│           └── __pycache__/
-│               ├── ai_nodes.cpython-314.pyc
-│               ├── data_nodes.cpython-314.pyc
-│               └── db_nodes.cpython-314.pyc
-└── frontend/
-    └── .gitkeep
+nCode/
+|-- backend/
+|   |-- core/
+|   |-- handlers/
+|   |-- models/
+|   |-- routers/
+|   `-- main.py
+|-- frontend/
+|   `-- src/
+|-- docs/
+|-- requirements.txt
+|-- run-dev.sh
+`-- docker-compose.yml
 ```
 
-## How It Works
+## Documentation
 
-Transpilation pipeline:
-
-1. **Parse** incoming workflow JSON.
-2. **Validate** payload against `N8nWorkflow`/`N8nNode` models.
-3. **Build graph** from node definitions + n8n `connections`.
-4. **Topological sort** execution order (cycle-safe).
-5. **Detect mode** from trigger type (FastAPI route mode vs standalone script mode).
-6. **Dispatch handlers** by node type through `HANDLER_MAP`.
-7. **Generate Python** source with explicit `items` handoff between node outputs.
-8. **Collect dependencies** and scaffold project artifacts.
-
-## Generated Output
-
-Each successful upload creates a downloadable ZIP containing:
-
-- `main.py` — generated Python workflow runtime.
-- `requirements.txt` — inferred package dependencies.
-- `.env.example` — credential/env placeholders discovered from nodes.
-- `README.md` — generated workflow-level quickstart notes.
-- `workflow_meta.json` — metadata (`workflow_name`, `node_count`, generation timestamp).
-
-## Security
-
-- Credentials are not embedded as plaintext in generated code.
-- Credential references are emitted as `os.getenv("...")` lookups.
-- `.env.example` is generated to declare required variables without secrets.
-- Upload/download flow uses strict validation (JSON-only upload, size limit, UUID download IDs).
-- Temporary ZIP files are cleaned up after download and during lifecycle cleanup.
-
-## Roadmap
-
-- Build React frontend for upload/preview/download UX.
-- Expand node handler coverage (especially AI and database nodes to full support).
-- Add multi-language generators (JS/Go) through an abstract generator interface.
-- Add automated tests for transpiler pipeline and API endpoints.
+- Docs site: https://opsingh861.github.io/nCode/
+- Architecture: docs/architecture.md
+- Getting started: docs/getting-started.md
+- Node handlers: docs/node-handlers.md
+- API reference: docs/api-reference.md
 
 ## License
 
-MIT (placeholder)
+MIT. See `LICENSE`.
