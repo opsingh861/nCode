@@ -31,16 +31,15 @@ from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import uvicorn
+from backend.core.pipeline import run_pipeline
+from backend.models import GenerateResponse, N8nWorkflow, NodePreview, PipelineWarning
+from backend.routers.generate import router as generate_router
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import ValidationError
 from starlette.background import BackgroundTask
-
-from backend.core.pipeline import run_pipeline
-from backend.models import GenerateResponse, N8nWorkflow, NodePreview, PipelineWarning
-from backend.routers.generate import router as generate_router
 
 # Load environment variables as early as possible so configuration values are
 # available during app creation and runtime entrypoint execution.
