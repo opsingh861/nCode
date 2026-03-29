@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --accent: 99 102 241;
+    --accent-light: 129 140 248;
+    --accent-dark: 79 70 229;
+  }
+
+  body {
+    @apply bg-zinc-950 text-zinc-100;
+  }
+
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-zinc-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-zinc-600;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 rounded-xl shadow-lg;
+  }
+  .glass-card-accent {
+    @apply bg-zinc-900/80 backdrop-blur-md border border-indigo-500/20 rounded-xl shadow-lg shadow-indigo-500/5;
+  }
+  .glow-border {
+    @apply border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.1)];
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400;
+  }
+}
