@@ -26,6 +26,7 @@ def _safe_var(name: str) -> str:
 # Set (Edit Fields)
 # ---------------------------------------------------------------------------
 
+
 @register(
     "n8n-nodes-base.set",
     "n8n-nodes-base.editFields",
@@ -47,8 +48,11 @@ class SetNodeHandler:
                 f"{var}_output = [{{**item, 'json': {{**item.get('json', {{}}), **({var}_fields if isinstance({var}_fields, dict) else {{}})}}}} for item in {prev_var}]",
             ]
             return IRNode(
-                node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-                python_var=var, code_lines=code_lines,
+                node_id=node.id,
+                node_name=node.name,
+                kind=IRNodeKind.STATEMENT,
+                python_var=var,
+                code_lines=code_lines,
             )
 
         # Manual mode: assigned fields
@@ -101,13 +105,19 @@ class SetNodeHandler:
             if include == "all":
                 code_lines.append(f"{var}_output = {prev_var}")
             elif include == "none":
-                code_lines.append(f"{var}_output = [{{'json': {{}}}} for _ in {prev_var}]")
+                code_lines.append(
+                    f"{var}_output = [{{'json': {{}}}} for _ in {prev_var}]"
+                )
             else:
                 code_lines.append(f"{var}_output = {prev_var}")
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment=f"Set / Edit Fields",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment=f"Set / Edit Fields",
         )
 
     def supported_operations(self) -> list[str]:
@@ -121,6 +131,7 @@ class SetNodeHandler:
 # Filter
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.filter")
 class FilterNodeHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -130,6 +141,7 @@ class FilterNodeHandler:
         params = node.parameters
 
         from backend.handlers.flow_control import _conditions_to_python
+
         conditions = params.get("conditions", params.get("condition", {}))
         cond_expr = _conditions_to_python(conditions, ctx)
 
@@ -143,8 +155,12 @@ class FilterNodeHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import re"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import re"],
+            code_lines=code_lines,
             comment=f"Filter items by condition",
         )
 
@@ -158,6 +174,7 @@ class FilterNodeHandler:
 # ---------------------------------------------------------------------------
 # Sort
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.sort")
 class SortNodeHandler:
@@ -191,8 +208,12 @@ class SortNodeHandler:
             code_lines.append(f"{var}_output = {prev_var}")
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment="Sort items",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment="Sort items",
         )
 
     def supported_operations(self) -> list[str]:
@@ -205,6 +226,7 @@ class SortNodeHandler:
 # ---------------------------------------------------------------------------
 # Limit
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.limit")
 class LimitNodeHandler:
@@ -227,8 +249,12 @@ class LimitNodeHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment=f"Limit to {max_items} items",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment=f"Limit to {max_items} items",
         )
 
     def supported_operations(self) -> list[str]:
@@ -241,6 +267,7 @@ class LimitNodeHandler:
 # ---------------------------------------------------------------------------
 # Split Out
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.splitOut")
 class SplitOutHandler:
@@ -266,8 +293,12 @@ class SplitOutHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment=f"Split Out: {field_name!r}",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment=f"Split Out: {field_name!r}",
         )
 
     def supported_operations(self) -> list[str]:
@@ -280,6 +311,7 @@ class SplitOutHandler:
 # ---------------------------------------------------------------------------
 # Aggregate
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.aggregate")
 class AggregateHandler:
@@ -300,7 +332,11 @@ class AggregateHandler:
             ]
         else:
             fields_spec = params.get("fieldsToAggregate", {})
-            fields_list = fields_spec.get("fieldToAggregate", []) if isinstance(fields_spec, dict) else []
+            fields_list = (
+                fields_spec.get("fieldToAggregate", [])
+                if isinstance(fields_spec, dict)
+                else []
+            )
             code_lines = [f"# Aggregate fields"]
             if fields_list:
                 aggregated = []
@@ -313,15 +349,21 @@ class AggregateHandler:
 
                 code_lines.append(f"{var}_combined = {{")
                 for orig, renamed in aggregated:
-                    code_lines.append(f"    '{renamed}': [item.get('json', {{}}).get('{orig}') for item in {prev_var}],")
+                    code_lines.append(
+                        f"    '{renamed}': [item.get('json', {{}}).get('{orig}') for item in {prev_var}],"
+                    )
                 code_lines.append(f"}}")
                 code_lines.append(f"{var}_output = [{{'json': {var}_combined}}]")
             else:
                 code_lines.append(f"{var}_output = {prev_var}")
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment="Aggregate items",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment="Aggregate items",
         )
 
     def supported_operations(self) -> list[str]:
@@ -335,6 +377,7 @@ class AggregateHandler:
 # Remove Duplicates
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.removeDuplicates")
 class RemoveDuplicatesHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -347,10 +390,20 @@ class RemoveDuplicatesHandler:
         dedup_fields = []
         if compare == "selectedFields":
             fields_spec = params.get("fieldsToCompare", {})
-            dedup_fields = [str(f.get("fieldName", "")) for f in fields_spec.get("fields", []) if isinstance(f, dict)]
+            dedup_fields = [
+                str(f.get("fieldName", ""))
+                for f in fields_spec.get("fields", [])
+                if isinstance(f, dict)
+            ]
 
         if dedup_fields:
-            key_expr = "(" + ", ".join(f'item.get("json", {{}}).get("{fn}")' for fn in dedup_fields) + ")"
+            key_expr = (
+                "("
+                + ", ".join(
+                    f'item.get("json", {{}}).get("{fn}")' for fn in dedup_fields
+                )
+                + ")"
+            )
             code_lines = [
                 f"# Remove Duplicates by: {', '.join(dedup_fields)}",
                 f"{var}_seen = set()",
@@ -375,8 +428,12 @@ class RemoveDuplicatesHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment="Remove Duplicates",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment="Remove Duplicates",
         )
 
     def supported_operations(self) -> list[str]:
@@ -389,6 +446,7 @@ class RemoveDuplicatesHandler:
 # ---------------------------------------------------------------------------
 # Rename Keys
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.renameKeys")
 class RenameKeysHandler:
@@ -410,7 +468,9 @@ class RenameKeysHandler:
                     if old_name:
                         rename_map[old_name] = new_name
 
-            map_literal = "{" + ", ".join(f'"{k}": "{v}"' for k, v in rename_map.items()) + "}"
+            map_literal = (
+                "{" + ", ".join(f'"{k}": "{v}"' for k, v in rename_map.items()) + "}"
+            )
             code_lines = [
                 f"# Rename Keys",
                 f"{var}_rename_map = {map_literal}",
@@ -423,11 +483,17 @@ class RenameKeysHandler:
                 f"    {var}_output.append({{'json': _new_json}})",
             ]
         else:
-            code_lines = [f"{var}_output = {prev_var}  # Rename Keys: no mappings configured"]
+            code_lines = [
+                f"{var}_output = {prev_var}  # Rename Keys: no mappings configured"
+            ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment="Rename Keys",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment="Rename Keys",
         )
 
     def supported_operations(self) -> list[str]:
@@ -441,6 +507,7 @@ class RenameKeysHandler:
 # Summarize
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.summarize")
 class SummarizeHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -450,11 +517,15 @@ class SummarizeHandler:
         params = node.parameters
 
         fields_spec = params.get("fieldsToSummarize", {})
-        summarize_list = fields_spec.get("values", []) if isinstance(fields_spec, dict) else []
+        summarize_list = (
+            fields_spec.get("values", []) if isinstance(fields_spec, dict) else []
+        )
 
         group_by = params.get("fieldsToGroupBy", {})
         group_list = group_by.get("values", []) if isinstance(group_by, dict) else []
-        group_fields = [str(g.get("name", "")) for g in group_list if isinstance(g, dict)]
+        group_fields = [
+            str(g.get("name", "")) for g in group_list if isinstance(g, dict)
+        ]
 
         code_lines = [f"# Summarize node"]
 
@@ -481,27 +552,45 @@ class SummarizeHandler:
             ]
             for field, agg, rename in agg_ops:
                 if agg == "sum":
-                    code_lines.append(f"    _result['{rename}'] = sum(g.get('{field}', 0) for g in _group)")
+                    code_lines.append(
+                        f"    _result['{rename}'] = sum(g.get('{field}', 0) for g in _group)"
+                    )
                 elif agg == "count":
                     code_lines.append(f"    _result['{rename}'] = len(_group)")
                 elif agg == "countunique":
-                    code_lines.append(f"    _result['{rename}'] = len(set(g.get('{field}') for g in _group))")
+                    code_lines.append(
+                        f"    _result['{rename}'] = len(set(g.get('{field}') for g in _group))"
+                    )
                 elif agg == "min":
-                    code_lines.append(f"    _result['{rename}'] = min((g.get('{field}', 0) for g in _group), default=None)")
+                    code_lines.append(
+                        f"    _result['{rename}'] = min((g.get('{field}', 0) for g in _group), default=None)"
+                    )
                 elif agg == "max":
-                    code_lines.append(f"    _result['{rename}'] = max((g.get('{field}', 0) for g in _group), default=None)")
+                    code_lines.append(
+                        f"    _result['{rename}'] = max((g.get('{field}', 0) for g in _group), default=None)"
+                    )
                 elif agg == "average":
-                    code_lines.append(f"    _vals = [g.get('{field}', 0) for g in _group]")
-                    code_lines.append(f"    _result['{rename}'] = sum(_vals) / len(_vals) if _vals else 0")
+                    code_lines.append(
+                        f"    _vals = [g.get('{field}', 0) for g in _group]"
+                    )
+                    code_lines.append(
+                        f"    _result['{rename}'] = sum(_vals) / len(_vals) if _vals else 0"
+                    )
                 else:
-                    code_lines.append(f"    _result['{rename}'] = len(_group)  # unsupported agg: {agg}")
+                    code_lines.append(
+                        f"    _result['{rename}'] = len(_group)  # unsupported agg: {agg}"
+                    )
             code_lines.append(f"    {var}_output.append({{'json': _result}})")
         else:
             code_lines.append(f"{var}_output = {prev_var}")
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment="Summarize",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment="Summarize",
         )
 
     def supported_operations(self) -> list[str]:
@@ -514,6 +603,7 @@ class SummarizeHandler:
 # ---------------------------------------------------------------------------
 # DateTime
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.dateTime")
 class DateTimeHandler:
@@ -555,8 +645,12 @@ class DateTimeHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["from datetime import datetime"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["from datetime import datetime"],
+            code_lines=code_lines,
             comment=f"DateTime ({action})",
         )
 
@@ -570,6 +664,7 @@ class DateTimeHandler:
 # ---------------------------------------------------------------------------
 # HTML Node (parse HTML / extract data)
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.html")
 class HtmlNodeHandler:
@@ -608,9 +703,18 @@ class HtmlNodeHandler:
             pip_packages = []
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["from bs4 import BeautifulSoup"] if "beautifulsoup4" in pip_packages else [],
-            pip_packages=pip_packages, code_lines=code_lines, comment=f"HTML ({operation})",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=(
+                ["from bs4 import BeautifulSoup"]
+                if "beautifulsoup4" in pip_packages
+                else []
+            ),
+            pip_packages=pip_packages,
+            code_lines=code_lines,
+            comment=f"HTML ({operation})",
         )
 
     def supported_operations(self) -> list[str]:
@@ -623,6 +727,7 @@ class HtmlNodeHandler:
 # ---------------------------------------------------------------------------
 # XML Node
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.xml")
 class XmlNodeHandler:
@@ -658,9 +763,14 @@ class XmlNodeHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import xmltodict"], pip_packages=["xmltodict"],
-            code_lines=code_lines, comment=f"XML ({mode})",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import xmltodict"],
+            pip_packages=["xmltodict"],
+            code_lines=code_lines,
+            comment=f"XML ({mode})",
         )
 
     def supported_operations(self) -> list[str]:
@@ -673,6 +783,7 @@ class XmlNodeHandler:
 # ---------------------------------------------------------------------------
 # Crypto
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.crypto")
 class CryptoHandler:
@@ -716,8 +827,12 @@ class CryptoHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import hashlib"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import hashlib"],
+            code_lines=code_lines,
             comment=f"Crypto ({action}, {hash_type})",
         )
 
@@ -732,6 +847,7 @@ class CryptoHandler:
 # Markdown
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.markdown")
 class MarkdownHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -742,7 +858,9 @@ class MarkdownHandler:
 
         mode = str(params.get("mode", "markdownToHtml")).lower()
         field = str(params.get("dataPropertyName", "data"))
-        dest = str(params.get("destinationKey", "html" if "tohtml" in mode else "markdown"))
+        dest = str(
+            params.get("destinationKey", "html" if "tohtml" in mode else "markdown")
+        )
 
         if "tohtml" in mode.replace("_", ""):
             code_lines = [
@@ -769,8 +887,12 @@ class MarkdownHandler:
             pip_packages = []
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, pip_packages=pip_packages, code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            pip_packages=pip_packages,
+            code_lines=code_lines,
             comment=f"Markdown ({mode})",
         )
 
@@ -784,6 +906,7 @@ class MarkdownHandler:
 # ---------------------------------------------------------------------------
 # Execute Command
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.executeCommand")
 class ExecuteCommandHandler:
@@ -810,9 +933,13 @@ class ExecuteCommandHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import subprocess", "import shlex"],
-            code_lines=code_lines, comment="Execute Command",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import subprocess", "import shlex"],
+            code_lines=code_lines,
+            comment="Execute Command",
         )
 
     def supported_operations(self) -> list[str]:
@@ -826,6 +953,7 @@ class ExecuteCommandHandler:
 # Compare Datasets
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.compareDatasets")
 class CompareDatasetsHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -834,8 +962,16 @@ class CompareDatasetsHandler:
         ctx.register_node_var(node.name, var)
         params = node.parameters
 
-        field1 = str(params.get("mergeByFields", {}).get("values", [{}])[0].get("field1", "id") if isinstance(params.get("mergeByFields", {}), dict) else "id")
-        field2 = str(params.get("mergeByFields", {}).get("values", [{}])[0].get("field2", "id") if isinstance(params.get("mergeByFields", {}), dict) else "id")
+        field1 = str(
+            params.get("mergeByFields", {}).get("values", [{}])[0].get("field1", "id")
+            if isinstance(params.get("mergeByFields", {}), dict)
+            else "id"
+        )
+        field2 = str(
+            params.get("mergeByFields", {}).get("values", [{}])[0].get("field2", "id")
+            if isinstance(params.get("mergeByFields", {}), dict)
+            else "id"
+        )
 
         code_lines = [
             f"# Compare Datasets",
@@ -851,8 +987,12 @@ class CompareDatasetsHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment="Compare Datasets",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment="Compare Datasets",
         )
 
     def supported_operations(self) -> list[str]:
@@ -865,6 +1005,7 @@ class CompareDatasetsHandler:
 # ---------------------------------------------------------------------------
 # Convert to File / Extract from File
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.convertToFile")
 class ConvertToFileHandler:
@@ -903,8 +1044,12 @@ class ConvertToFileHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment=f"Convert to File ({operation})",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment=f"Convert to File ({operation})",
         )
 
     def supported_operations(self) -> list[str]:
@@ -955,8 +1100,12 @@ class ExtractFromFileHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, code_lines=code_lines, comment=f"Extract from File ({operation})",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            code_lines=code_lines,
+            comment=f"Extract from File ({operation})",
         )
 
     def supported_operations(self) -> list[str]:
@@ -970,6 +1119,7 @@ class ExtractFromFileHandler:
 # Item Lists
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.itemLists")
 class ItemListsHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -982,9 +1132,11 @@ class ItemListsHandler:
 
         if "split" in operation:
             from backend.handlers.data_transform import SplitOutHandler
+
             return SplitOutHandler().generate(node, ctx)
         elif "remove" in operation:
             from backend.handlers.data_transform import RemoveDuplicatesHandler
+
             return RemoveDuplicatesHandler().generate(node, ctx)
         else:
             code_lines = [
@@ -992,8 +1144,12 @@ class ItemListsHandler:
                 f"{var}_output = {prev_var}",
             ]
             return IRNode(
-                node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-                python_var=var, code_lines=code_lines, comment=f"Item Lists ({operation})",
+                node_id=node.id,
+                node_name=node.name,
+                kind=IRNodeKind.STATEMENT,
+                python_var=var,
+                code_lines=code_lines,
+                comment=f"Item Lists ({operation})",
             )
 
     def supported_operations(self) -> list[str]:

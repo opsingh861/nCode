@@ -26,6 +26,10 @@ Two output modes, detected automatically from the trigger node type:
 # Tests (no pytest.ini — vanilla discovery)
 backend\.venv\Scripts\python.exe -m pytest backend/tests/ -v
 
+# Formatting checks (match CI behavior)
+backend\.venv\Scripts\python.exe -m black --check backend/
+backend\.venv\Scripts\python.exe -m isort --check-only --profile black backend/
+
 # Frontend dev (Vite, proxies /api → :8000)
 cd frontend && npm run dev
 
@@ -34,6 +38,8 @@ docker compose up --build
 ```
 
 Backend venv lives at `backend/.venv/`. `load_dotenv()` runs at startup; no required env vars — everything has defaults or is optional.
+
+Frontend lockfile note: keep `frontend/package-lock.json` tracked in git because CI uses `npm ci` and `actions/setup-node` npm cache keyed from that lockfile.
 
 ## Adding a Handler
 

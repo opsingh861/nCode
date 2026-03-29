@@ -26,6 +26,7 @@ def _safe_var(name: str) -> str:
 # Slack
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.slack")
 class SlackHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -61,9 +62,13 @@ class SlackHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"Slack ({resource}/{operation})",
         )
 
@@ -77,6 +82,7 @@ class SlackHandler:
 # ---------------------------------------------------------------------------
 # Telegram
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.telegram")
 class TelegramHandler:
@@ -106,9 +112,13 @@ class TelegramHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"Telegram ({resource}/{operation})",
         )
 
@@ -123,6 +133,7 @@ class TelegramHandler:
 # Discord
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.discord")
 class DiscordHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -134,7 +145,9 @@ class DiscordHandler:
         operation = str(params.get("operation", "sendMessage")).lower()
 
         if operation == "sendmessage":
-            webhook_url = ctx.resolve_expr(str(params.get("webhookUri", params.get("webhookUrl", ""))))
+            webhook_url = ctx.resolve_expr(
+                str(params.get("webhookUri", params.get("webhookUrl", "")))
+            )
             text = ctx.resolve_expr(str(params.get("text", params.get("content", ""))))
             code_lines = [
                 f"import requests",
@@ -152,9 +165,13 @@ class DiscordHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"Discord ({operation})",
         )
 
@@ -169,6 +186,7 @@ class DiscordHandler:
 # Gmail
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.gmail")
 class GmailHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -180,9 +198,13 @@ class GmailHandler:
         operation = str(params.get("operation", "send")).lower()
 
         if operation in ("send", "sendemail"):
-            to_addr = ctx.resolve_expr(str(params.get("toList", params.get("sendTo", ""))))
+            to_addr = ctx.resolve_expr(
+                str(params.get("toList", params.get("sendTo", "")))
+            )
             subject = ctx.resolve_expr(str(params.get("subject", "")))
-            body = ctx.resolve_expr(str(params.get("message", params.get("emailType", ""))))
+            body = ctx.resolve_expr(
+                str(params.get("message", params.get("emailType", "")))
+            )
             code_lines = [
                 f"import smtplib",
                 f"import os",
@@ -205,9 +227,13 @@ class GmailHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import smtplib", "import os"],
-            code_lines=code_lines, comment=f"Gmail ({operation})",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import smtplib", "import os"],
+            code_lines=code_lines,
+            comment=f"Gmail ({operation})",
         )
 
     def supported_operations(self) -> list[str]:
@@ -220,6 +246,7 @@ class GmailHandler:
 # ---------------------------------------------------------------------------
 # Notion
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.notion", "n8n-nodes-base.notionV2")
 class NotionHandler:
@@ -241,7 +268,7 @@ class NotionHandler:
         if resource == "page" and operation == "get":
             page_id = ctx.resolve_expr(str(params.get("pageId", "")))
             code_lines += [
-                f"_notion_resp = requests.get(f'https://api.notion.com/v1/pages/{{str({page_id}).replace(\"-\", \"\"[0:])}}', headers=_notion_headers)",
+                f'_notion_resp = requests.get(f\'https://api.notion.com/v1/pages/{{str({page_id}).replace("-", ""[0:])}}\', headers=_notion_headers)',
                 f"{var}_output = [{{'json': _notion_resp.json()}}]",
             ]
         elif resource == "database" and operation in ("getall", "query"):
@@ -267,9 +294,13 @@ class NotionHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"Notion ({resource}/{operation})",
         )
 
@@ -283,6 +314,7 @@ class NotionHandler:
 # ---------------------------------------------------------------------------
 # Airtable
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.airtable")
 class AirtableHandler:
@@ -343,9 +375,13 @@ class AirtableHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"Airtable ({operation})",
         )
 
@@ -360,6 +396,7 @@ class AirtableHandler:
 # Google Sheets
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.googleSheets")
 class GoogleSheetsHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -369,7 +406,9 @@ class GoogleSheetsHandler:
         params = node.parameters
 
         operation = str(params.get("operation", "read")).lower()
-        sheet_id = ctx.resolve_expr(str(params.get("documentId", params.get("spreadsheetId", ""))))
+        sheet_id = ctx.resolve_expr(
+            str(params.get("documentId", params.get("spreadsheetId", "")))
+        )
         range_val = ctx.resolve_expr(str(params.get("range", "Sheet1!A:Z")))
 
         code_lines = [
@@ -411,10 +450,13 @@ class GoogleSheetsHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
             python_var=var,
             pip_packages=["google-api-python-client", "google-auth"],
-            code_lines=code_lines, comment=f"Google Sheets ({operation})",
+            code_lines=code_lines,
+            comment=f"Google Sheets ({operation})",
         )
 
     def supported_operations(self) -> list[str]:
@@ -427,6 +469,7 @@ class GoogleSheetsHandler:
 # ---------------------------------------------------------------------------
 # GitHub
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.github")
 class GitHubHandler:
@@ -467,9 +510,13 @@ class GitHubHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"GitHub ({resource}/{operation})",
         )
 
@@ -483,6 +530,7 @@ class GitHubHandler:
 # ---------------------------------------------------------------------------
 # Stripe
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.stripe")
 class StripeHandler:
@@ -519,9 +567,13 @@ class StripeHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import stripe", "import os"],
-            pip_packages=["stripe"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import stripe", "import os"],
+            pip_packages=["stripe"],
+            code_lines=code_lines,
             comment=f"Stripe ({resource}/{operation})",
         )
 
@@ -535,6 +587,7 @@ class StripeHandler:
 # ---------------------------------------------------------------------------
 # Supabase
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.supabase")
 class SupabaseHandler:
@@ -581,8 +634,12 @@ class SupabaseHandler:
             code_lines += [f"{var}_output = {prev_var}"]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, pip_packages=["supabase"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            pip_packages=["supabase"],
+            code_lines=code_lines,
             comment=f"Supabase ({operation}) on {table!r}",
         )
 
@@ -596,6 +653,7 @@ class SupabaseHandler:
 # ---------------------------------------------------------------------------
 # HubSpot
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.hubspot")
 class HubSpotHandler:
@@ -626,9 +684,13 @@ class HubSpotHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"HubSpot ({resource}/{operation})",
         )
 
@@ -642,6 +704,7 @@ class HubSpotHandler:
 # ---------------------------------------------------------------------------
 # Jira
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.jira")
 class JiraHandler:
@@ -690,9 +753,13 @@ class JiraHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"Jira ({resource}/{operation})",
         )
 
@@ -707,20 +774,24 @@ class JiraHandler:
 # Sticky Note (annotation only — generates no executable code)
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.stickyNote", "n8n-nodes-base.stickynote")
 class StickyNoteHandler:
     """Sticky notes are visual annotations; they emit only a comment."""
 
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
         import re as _re
+
         var = _safe_var(node.name)
         prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
         content = str(node.parameters.get("content", "")).replace("\n", " ")
         content_short = content[:80] + ("..." if len(content) > 80 else "")
         return IRNode(
-            node_id=node.id, node_name=node.name,
-            kind=IRNodeKind.STATEMENT, python_var=var,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
             code_lines=[
                 f"# Sticky Note: {node.name!r} — {content_short!r}",
                 f"{var}_output = {prev_var}",
@@ -739,6 +810,7 @@ class StickyNoteHandler:
 # Send Email (SMTP)
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.emailSend", "n8n-nodes-base.send_email")
 class EmailSendHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -750,7 +822,9 @@ class EmailSendHandler:
         to_email = ctx.resolve_expr(str(params.get("toEmail", params.get("to", ""))))
         subject = ctx.resolve_expr(str(params.get("subject", "")))
         body = ctx.resolve_expr(str(params.get("message", params.get("text", ""))))
-        from_email = ctx.resolve_expr(str(params.get("fromEmail", params.get("from", ""))))
+        from_email = ctx.resolve_expr(
+            str(params.get("fromEmail", params.get("from", "")))
+        )
 
         code_lines = [
             f"import smtplib, os",
@@ -770,15 +844,27 @@ class EmailSendHandler:
             f"        _smtp.starttls()",
             f"        _smtp.login(_smtp_user, _smtp_pass)",
             f"        _smtp.send_message(_email_msg)",
-            f"    {var}_output = [{{" + "'json': {'success': True, 'to': " + f"{to_email}" + ", 'subject': " + f"{subject}" + "}" + "}]",
+            f"    {var}_output = [{{"
+            + "'json': {'success': True, 'to': "
+            + f"{to_email}"
+            + ", 'subject': "
+            + f"{subject}"
+            + "}"
+            + "}]",
             f"except Exception as _e:",
-            f"    {var}_output = [{{" + "'json': {'success': False, 'error': str(_e)}" + "}]",
+            f"    {var}_output = [{{"
+            + "'json': {'success': False, 'error': str(_e)}"
+            + "}]",
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import smtplib", "import os"],
-            pip_packages=[], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import smtplib", "import os"],
+            pip_packages=[],
+            code_lines=code_lines,
             comment="Send Email (SMTP)",
         )
 
@@ -792,6 +878,7 @@ class EmailSendHandler:
 # ---------------------------------------------------------------------------
 # RSS Feed Read
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.rssFeedRead", "n8n-nodes-base.rss")
 class RssFeedHandler:
@@ -814,9 +901,13 @@ class RssFeedHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=[],
-            pip_packages=["feedparser"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=[],
+            pip_packages=["feedparser"],
+            code_lines=code_lines,
             comment="RSS Feed Read",
         )
 
@@ -830,6 +921,7 @@ class RssFeedHandler:
 # ---------------------------------------------------------------------------
 # Typeform
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.typeform")
 class TypeformHandler:
@@ -851,9 +943,13 @@ class TypeformHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment="Typeform",
         )
 
@@ -867,6 +963,7 @@ class TypeformHandler:
 # ---------------------------------------------------------------------------
 # Pipedrive
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.pipedrive")
 class PipedriveHandler:
@@ -902,9 +999,13 @@ class PipedriveHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"Pipedrive ({resource}/{operation})",
         )
 
@@ -918,6 +1019,7 @@ class PipedriveHandler:
 # ---------------------------------------------------------------------------
 # Zendesk
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.zendesk")
 class ZendeskHandler:
@@ -951,9 +1053,13 @@ class ZendeskHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"Zendesk ({resource}/{operation})",
         )
 
@@ -967,6 +1073,7 @@ class ZendeskHandler:
 # ---------------------------------------------------------------------------
 # Twitter / X
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.twitter", "n8n-nodes-base.x")
 class TwitterHandler:
@@ -1009,9 +1116,13 @@ class TwitterHandler:
             code_lines += [f"{var}_output = {prev_var}"]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import requests", "import os"],
-            pip_packages=["requests"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import requests", "import os"],
+            pip_packages=["requests"],
+            code_lines=code_lines,
             comment=f"Twitter ({resource}/{operation})",
         )
 

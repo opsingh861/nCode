@@ -4,13 +4,22 @@ import pytest
 
 from backend.core.expression_engine import VariableContext
 from backend.core.ir import IRNodeKind
+from backend.handlers.ai_langchain import (
+    AiAgentHandler,
+    BasicLlmChainHandler,
+    SentimentAnalysisHandler,
+)
 from backend.handlers.base import GenerationContext
-from backend.handlers.triggers import ChatTriggerHandler, ManualTriggerHandler, WebhookTriggerHandler, ScheduleTriggerHandler
-from backend.handlers.http import HttpRequestHandler
-from backend.handlers.flow_control import IfNodeHandler, NoOpHandler
-from backend.handlers.data_transform import SetNodeHandler, FilterNodeHandler
-from backend.handlers.ai_langchain import AiAgentHandler, BasicLlmChainHandler, SentimentAnalysisHandler
+from backend.handlers.data_transform import FilterNodeHandler, SetNodeHandler
 from backend.handlers.fallback import FALLBACK
+from backend.handlers.flow_control import IfNodeHandler, NoOpHandler
+from backend.handlers.http import HttpRequestHandler
+from backend.handlers.triggers import (
+    ChatTriggerHandler,
+    ManualTriggerHandler,
+    ScheduleTriggerHandler,
+    WebhookTriggerHandler,
+)
 from backend.models.workflow import N8nNode
 
 
@@ -35,6 +44,7 @@ def _make_ctx(mode: str = "script") -> GenerationContext:
 # ManualTriggerHandler
 # ---------------------------------------------------------------------------
 
+
 class TestManualTriggerHandler:
     def test_generates_statement(self):
         h = ManualTriggerHandler()
@@ -49,7 +59,9 @@ class TestManualTriggerHandler:
         node = _make_node("Start", "n8n-nodes-base.manualTrigger")
         ctx = _make_ctx()
         h.generate(node, ctx)
-        assert ctx.var_context.resolve("Start") != ctx.var_context.resolve("__unknown__")
+        assert ctx.var_context.resolve("Start") != ctx.var_context.resolve(
+            "__unknown__"
+        )
 
     def test_code_lines_not_empty(self):
         h = ManualTriggerHandler()
@@ -71,12 +83,18 @@ class TestManualTriggerHandler:
 # WebhookTriggerHandler
 # ---------------------------------------------------------------------------
 
+
 class TestWebhookTriggerHandler:
     def test_fastapi_mode_generates_route(self):
         h = WebhookTriggerHandler()
-        node = _make_node("Webhook", "n8n-nodes-base.webhook", {
-            "path": "my-hook", "httpMethod": "POST",
-        })
+        node = _make_node(
+            "Webhook",
+            "n8n-nodes-base.webhook",
+            {
+                "path": "my-hook",
+                "httpMethod": "POST",
+            },
+        )
         ctx = _make_ctx(mode="fastapi")
         ir = h.generate(node, ctx)
         code = "\n".join(ir.code_lines)
@@ -84,9 +102,14 @@ class TestWebhookTriggerHandler:
 
     def test_path_in_code(self):
         h = WebhookTriggerHandler()
-        node = _make_node("Webhook", "n8n-nodes-base.webhook", {
-            "path": "custom-path", "httpMethod": "GET",
-        })
+        node = _make_node(
+            "Webhook",
+            "n8n-nodes-base.webhook",
+            {
+                "path": "custom-path",
+                "httpMethod": "GET",
+            },
+        )
         ctx = _make_ctx(mode="fastapi")
         ir = h.generate(node, ctx)
         code = "\n".join(ir.code_lines)
@@ -97,12 +120,17 @@ class TestWebhookTriggerHandler:
 # ChatTriggerHandler
 # ---------------------------------------------------------------------------
 
+
 class TestChatTriggerHandler:
     def test_generates_typed_body_model(self):
         h = ChatTriggerHandler()
-        node = _make_node("When chat message received", "@n8n/n8n-nodes-langchain.chatTrigger", {
-            "path": "chat",
-        })
+        node = _make_node(
+            "When chat message received",
+            "@n8n/n8n-nodes-langchain.chatTrigger",
+            {
+                "path": "chat",
+            },
+        )
         ctx = _make_ctx(mode="fastapi")
         ir = h.generate(node, ctx)
         code = "\n".join(ir.code_lines)
@@ -115,13 +143,18 @@ class TestChatTriggerHandler:
 # HttpRequestHandler
 # ---------------------------------------------------------------------------
 
+
 class TestHttpRequestHandler:
     def test_get_request(self):
         h = HttpRequestHandler()
-        node = _make_node("HTTP", "n8n-nodes-base.httpRequest", {
-            "method": "GET",
-            "url": "https://api.example.com/data",
-        })
+        node = _make_node(
+            "HTTP",
+            "n8n-nodes-base.httpRequest",
+            {
+                "method": "GET",
+                "url": "https://api.example.com/data",
+            },
+        )
         ctx = _make_ctx()
         ir = h.generate(node, ctx)
         code = "\n".join(ir.code_lines)
@@ -130,22 +163,30 @@ class TestHttpRequestHandler:
 
     def test_post_with_body(self):
         h = HttpRequestHandler()
-        node = _make_node("HTTP", "n8n-nodes-base.httpRequest", {
-            "method": "POST",
-            "url": "https://api.example.com/submit",
-            "sendBody": True,
-            "bodyContentType": "json",
-        })
+        node = _make_node(
+            "HTTP",
+            "n8n-nodes-base.httpRequest",
+            {
+                "method": "POST",
+                "url": "https://api.example.com/submit",
+                "sendBody": True,
+                "bodyContentType": "json",
+            },
+        )
         ctx = _make_ctx()
         ir = h.generate(node, ctx)
         assert "requests" in ir.pip_packages
 
     def test_output_is_list(self):
         h = HttpRequestHandler()
-        node = _make_node("HTTP", "n8n-nodes-base.httpRequest", {
-            "method": "GET",
-            "url": "https://example.com",
-        })
+        node = _make_node(
+            "HTTP",
+            "n8n-nodes-base.httpRequest",
+            {
+                "method": "GET",
+                "url": "https://example.com",
+            },
+        )
         ctx = _make_ctx()
         ir = h.generate(node, ctx)
         code = "\n".join(ir.code_lines)
@@ -156,22 +197,27 @@ class TestHttpRequestHandler:
 # IfNodeHandler
 # ---------------------------------------------------------------------------
 
+
 class TestIfNodeHandler:
     def test_generates_if_branch(self):
         h = IfNodeHandler()
-        node = _make_node("IF", "n8n-nodes-base.if", {
-            "conditions": {
-                "conditions": [
-                    {
-                        "id": "c1",
-                        "leftValue": "={{ $json.x }}",
-                        "operator": {"type": "number", "operation": "gt"},
-                        "rightValue": 5,
-                    }
-                ],
-                "combinator": "and",
-            }
-        })
+        node = _make_node(
+            "IF",
+            "n8n-nodes-base.if",
+            {
+                "conditions": {
+                    "conditions": [
+                        {
+                            "id": "c1",
+                            "leftValue": "={{ $json.x }}",
+                            "operator": {"type": "number", "operation": "gt"},
+                            "rightValue": 5,
+                        }
+                    ],
+                    "combinator": "and",
+                }
+            },
+        )
         node.typeVersion = 2
         ctx = _make_ctx()
         ctx.var_context.register("Prev", "prev")
@@ -180,12 +226,16 @@ class TestIfNodeHandler:
 
     def test_true_false_outputs(self):
         h = IfNodeHandler()
-        node = _make_node("IF", "n8n-nodes-base.if", {
-            "conditions": {
-                "conditions": [],
-                "combinator": "and",
-            }
-        })
+        node = _make_node(
+            "IF",
+            "n8n-nodes-base.if",
+            {
+                "conditions": {
+                    "conditions": [],
+                    "combinator": "and",
+                }
+            },
+        )
         node.typeVersion = 2
         ctx = _make_ctx()
         ir = h.generate(node, ctx)
@@ -199,9 +249,11 @@ class TestIfNodeHandler:
 
     def test_has_condition_line(self):
         h = IfNodeHandler()
-        node = _make_node("IF", "n8n-nodes-base.if", {
-            "conditions": {"conditions": [], "combinator": "and"}
-        })
+        node = _make_node(
+            "IF",
+            "n8n-nodes-base.if",
+            {"conditions": {"conditions": [], "combinator": "and"}},
+        )
         node.typeVersion = 2
         ctx = _make_ctx()
         ir = h.generate(node, ctx)
@@ -214,17 +266,20 @@ class TestIfNodeHandler:
 # SetNodeHandler
 # ---------------------------------------------------------------------------
 
+
 class TestSetNodeHandler:
     def test_generates_output(self):
         h = SetNodeHandler()
-        node = _make_node("Set", "n8n-nodes-base.set", {
-            "assignments": {
-                "assignments": [
-                    {"name": "key", "value": "value", "type": "string"}
-                ]
+        node = _make_node(
+            "Set",
+            "n8n-nodes-base.set",
+            {
+                "assignments": {
+                    "assignments": [{"name": "key", "value": "value", "type": "string"}]
+                },
+                "options": {},
             },
-            "options": {},
-        })
+        )
         node.typeVersion = 3
         ctx = _make_ctx()
         ir = h.generate(node, ctx)
@@ -233,14 +288,18 @@ class TestSetNodeHandler:
 
     def test_field_name_in_code(self):
         h = SetNodeHandler()
-        node = _make_node("Set", "n8n-nodes-base.set", {
-            "assignments": {
-                "assignments": [
-                    {"name": "my_field", "value": "my_value", "type": "string"}
-                ]
+        node = _make_node(
+            "Set",
+            "n8n-nodes-base.set",
+            {
+                "assignments": {
+                    "assignments": [
+                        {"name": "my_field", "value": "my_value", "type": "string"}
+                    ]
+                },
+                "options": {},
             },
-            "options": {},
-        })
+        )
         node.typeVersion = 3
         ctx = _make_ctx()
         ir = h.generate(node, ctx)
@@ -252,22 +311,27 @@ class TestSetNodeHandler:
 # FilterNodeHandler
 # ---------------------------------------------------------------------------
 
+
 class TestFilterNodeHandler:
     def test_generates_list_comprehension(self):
         h = FilterNodeHandler()
-        node = _make_node("Filter", "n8n-nodes-base.filter", {
-            "conditions": {
-                "conditions": [
-                    {
-                        "id": "c1",
-                        "leftValue": "={{ $json.active }}",
-                        "operator": {"type": "boolean", "operation": "true"},
-                        "rightValue": "",
-                    }
-                ],
-                "combinator": "and",
-            }
-        })
+        node = _make_node(
+            "Filter",
+            "n8n-nodes-base.filter",
+            {
+                "conditions": {
+                    "conditions": [
+                        {
+                            "id": "c1",
+                            "leftValue": "={{ $json.active }}",
+                            "operator": {"type": "boolean", "operation": "true"},
+                            "rightValue": "",
+                        }
+                    ],
+                    "combinator": "and",
+                }
+            },
+        )
         ctx = _make_ctx()
         ir = h.generate(node, ctx)
         code = "\n".join(ir.code_lines)
@@ -277,6 +341,7 @@ class TestFilterNodeHandler:
 # ---------------------------------------------------------------------------
 # NoOpHandler
 # ---------------------------------------------------------------------------
+
 
 class TestNoOpHandler:
     def test_pass_through(self):
@@ -293,6 +358,7 @@ class TestNoOpHandler:
 # ---------------------------------------------------------------------------
 # FallbackHandler
 # ---------------------------------------------------------------------------
+
 
 class TestFallbackHandler:
     def test_generates_pass_through(self):
@@ -314,15 +380,24 @@ class TestFallbackHandler:
 # AI / LangChain handlers
 # ---------------------------------------------------------------------------
 
+
 class TestAiLangChainHandlers:
     def test_agent_uses_create_agent(self):
         h = AiAgentHandler()
-        node = _make_node("AI Agent", "@n8n/n8n-nodes-langchain.agent", {
-            "systemMessage": "Be helpful",
-        })
-        llm_node = _make_node("OpenAI Chat", "@n8n/n8n-nodes-langchain.lmChatOpenAi", {
-            "model": "gpt-4o-mini",
-        })
+        node = _make_node(
+            "AI Agent",
+            "@n8n/n8n-nodes-langchain.agent",
+            {
+                "systemMessage": "Be helpful",
+            },
+        )
+        llm_node = _make_node(
+            "OpenAI Chat",
+            "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            {
+                "model": "gpt-4o-mini",
+            },
+        )
         ctx = _make_ctx()
         ctx.ai_sub_nodes = {
             "ai_languageModel": [llm_node],
@@ -338,12 +413,20 @@ class TestAiLangChainHandlers:
 
     def test_basic_chain_uses_core_prompt_template(self):
         h = BasicLlmChainHandler()
-        node = _make_node("LLM Chain", "@n8n/n8n-nodes-langchain.chainLlm", {
-            "prompt": "Question: {input}",
-        })
-        llm_node = _make_node("OpenAI Chat", "@n8n/n8n-nodes-langchain.lmChatOpenAi", {
-            "model": "gpt-4o-mini",
-        })
+        node = _make_node(
+            "LLM Chain",
+            "@n8n/n8n-nodes-langchain.chainLlm",
+            {
+                "prompt": "Question: {input}",
+            },
+        )
+        llm_node = _make_node(
+            "OpenAI Chat",
+            "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            {
+                "model": "gpt-4o-mini",
+            },
+        )
         ctx = _make_ctx()
         ctx.ai_sub_nodes = {"ai_languageModel": [llm_node]}
 
@@ -354,12 +437,20 @@ class TestAiLangChainHandlers:
 
     def test_sentiment_does_not_use_predict(self):
         h = SentimentAnalysisHandler()
-        node = _make_node("Sentiment", "@n8n/n8n-nodes-langchain.sentimentAnalysis", {
-            "inputText": "text",
-        })
-        llm_node = _make_node("OpenAI Chat", "@n8n/n8n-nodes-langchain.lmChatOpenAi", {
-            "model": "gpt-4o-mini",
-        })
+        node = _make_node(
+            "Sentiment",
+            "@n8n/n8n-nodes-langchain.sentimentAnalysis",
+            {
+                "inputText": "text",
+            },
+        )
+        llm_node = _make_node(
+            "OpenAI Chat",
+            "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            {
+                "model": "gpt-4o-mini",
+            },
+        )
         ctx = _make_ctx()
         ctx.ai_sub_nodes = {"ai_languageModel": [llm_node]}
 
@@ -371,15 +462,27 @@ class TestAiLangChainHandlers:
 
     def test_agent_memory_uses_runnable_with_message_history(self):
         h = AiAgentHandler()
-        node = _make_node("AI Agent", "@n8n/n8n-nodes-langchain.agent", {
-            "systemMessage": "Be helpful",
-        })
-        llm_node = _make_node("OpenAI Chat", "@n8n/n8n-nodes-langchain.lmChatOpenAi", {
-            "model": "gpt-4o-mini",
-        })
-        mem_node = _make_node("Memory", "@n8n/n8n-nodes-langchain.memoryBufferWindow", {
-            "contextWindowLength": 5,
-        })
+        node = _make_node(
+            "AI Agent",
+            "@n8n/n8n-nodes-langchain.agent",
+            {
+                "systemMessage": "Be helpful",
+            },
+        )
+        llm_node = _make_node(
+            "OpenAI Chat",
+            "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            {
+                "model": "gpt-4o-mini",
+            },
+        )
+        mem_node = _make_node(
+            "Memory",
+            "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            {
+                "contextWindowLength": 5,
+            },
+        )
         ctx = _make_ctx(mode="fastapi")
         ctx.ai_sub_nodes = {
             "ai_languageModel": [llm_node],
@@ -398,12 +501,20 @@ class TestAiLangChainHandlers:
     def test_agent_postgres_tool_closes_connections(self):
         h = AiAgentHandler()
         node = _make_node("AI Agent", "@n8n/n8n-nodes-langchain.agent")
-        llm_node = _make_node("OpenAI Chat", "@n8n/n8n-nodes-langchain.lmChatOpenAi", {
-            "model": "gpt-4o-mini",
-        })
-        tool_node = _make_node("Postgres", "n8n-nodes-base.postgresTool", {
-            "query": "{{ $fromAI('sql_statement') }}",
-        })
+        llm_node = _make_node(
+            "OpenAI Chat",
+            "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            {
+                "model": "gpt-4o-mini",
+            },
+        )
+        tool_node = _make_node(
+            "Postgres",
+            "n8n-nodes-base.postgresTool",
+            {
+                "query": "{{ $fromAI('sql_statement') }}",
+            },
+        )
         ctx = _make_ctx(mode="fastapi")
         ctx.ai_sub_nodes = {
             "ai_languageModel": [llm_node],

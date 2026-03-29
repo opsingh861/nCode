@@ -57,7 +57,9 @@ class HttpRequestHandler:
                     query_params_list.append((name_val, value_val))
 
         # Request body
-        body_type = str(params.get("contentType", params.get("bodyContentType", ""))).lower()
+        body_type = str(
+            params.get("contentType", params.get("bodyContentType", ""))
+        ).lower()
         json_body = params.get("jsonBody", params.get("body", ""))
         body_params_spec = params.get("bodyParameters", {})
         form_params_list = []
@@ -77,7 +79,10 @@ class HttpRequestHandler:
             timeout_secs = 10.0
 
         # Redirect
-        allow_redirect = not bool(params.get("redirect", {}).get("redirect", {}).get("followRedirects", True) is False)
+        allow_redirect = not bool(
+            params.get("redirect", {}).get("redirect", {}).get("followRedirects", True)
+            is False
+        )
 
         code_lines = [f"# HTTP {method}: {var}"]
 
@@ -95,7 +100,11 @@ class HttpRequestHandler:
                 f"import os",
                 f'{var}_auth = (os.environ.get("HTTP_BASIC_USER", ""), os.environ.get("HTTP_BASIC_PASS", ""))',
             ]
-        elif auth_type in ("headerauth", "genericcredentialtype", "predefinedcredentialtype"):
+        elif auth_type in (
+            "headerauth",
+            "genericcredentialtype",
+            "predefinedcredentialtype",
+        ):
             code_lines += [
                 f"import os",
                 f'{var}_headers["Authorization"] = os.environ.get("HTTP_AUTH_TOKEN", "")',

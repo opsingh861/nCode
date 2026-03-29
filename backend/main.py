@@ -37,8 +37,8 @@ from fastapi.responses import FileResponse
 from pydantic import ValidationError
 from starlette.background import BackgroundTask
 
-from backend.models import GenerateResponse, N8nWorkflow, NodePreview, PipelineWarning
 from backend.core.pipeline import run_pipeline
+from backend.models import GenerateResponse, N8nWorkflow, NodePreview, PipelineWarning
 from backend.routers.generate import router as generate_router
 
 # Load environment variables as early as possible so configuration values are
@@ -85,7 +85,9 @@ def _validate_download_id(download_id: str) -> str:
     try:
         parsed_uuid = uuid.UUID(download_id)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid download_id format") from exc
+        raise HTTPException(
+            status_code=400, detail="Invalid download_id format"
+        ) from exc
 
     return str(parsed_uuid)
 
@@ -94,7 +96,10 @@ def _validate_download_id(download_id: str) -> str:
 # Project artifact generators (README, Dockerfile, etc.)
 # ---------------------------------------------------------------------------
 
-def _generate_readme(workflow_name: str, nodes: list, is_fastapi_mode: bool = False) -> str:
+
+def _generate_readme(
+    workflow_name: str, nodes: list, is_fastapi_mode: bool = False
+) -> str:
     mode = "FastAPI web service" if is_fastapi_mode else "standalone script"
     node_list = "\n".join(f"- {n.name} ({n.type})" for n in nodes)
     return (
@@ -116,7 +121,11 @@ def _generate_readme(workflow_name: str, nodes: list, is_fastapi_mode: bool = Fa
 
 
 def _generate_dockerfile(is_fastapi_mode: bool = False) -> str:
-    cmd = 'CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]' if is_fastapi_mode else 'CMD ["python", "main.py"]'
+    cmd = (
+        'CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]'
+        if is_fastapi_mode
+        else 'CMD ["python", "main.py"]'
+    )
     return (
         "FROM python:3.11-slim\n"
         "WORKDIR /app\n"
@@ -230,7 +239,9 @@ async def upload_workflow(file: UploadFile = File(...)) -> GenerateResponse:
     try:
         size_bytes = _get_upload_size_bytes(file)
     except OSError as exc:
-        raise HTTPException(status_code=400, detail="Unable to inspect uploaded file size") from exc
+        raise HTTPException(
+            status_code=400, detail="Unable to inspect uploaded file size"
+        ) from exc
 
     if size_bytes > MAX_UPLOAD_SIZE_BYTES:
         raise HTTPException(
@@ -244,7 +255,9 @@ async def upload_workflow(file: UploadFile = File(...)) -> GenerateResponse:
     try:
         workflow_dict: dict[str, Any] = json.loads(raw_content.decode("utf-8"))
     except UnicodeDecodeError as exc:
-        raise HTTPException(status_code=400, detail="Uploaded file must be UTF-8 encoded JSON") from exc
+        raise HTTPException(
+            status_code=400, detail="Uploaded file must be UTF-8 encoded JSON"
+        ) from exc
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail=f"Invalid JSON: {exc.msg}") from exc
 
@@ -256,13 +269,17 @@ async def upload_workflow(file: UploadFile = File(...)) -> GenerateResponse:
     try:
         result = run_pipeline(workflow_dict)
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"Transpilation failed: {exc}") from exc
+        raise HTTPException(
+            status_code=500, detail=f"Transpilation failed: {exc}"
+        ) from exc
 
     generated_code = result.generated_code
     requirements_content = result.requirements_txt or ""
 
     _is_fastapi = result.mode == "fastapi"
-    readme_content = _generate_readme(workflow.name, workflow.nodes, is_fastapi_mode=_is_fastapi)
+    readme_content = _generate_readme(
+        workflow.name, workflow.nodes, is_fastapi_mode=_is_fastapi
+    )
     dockerfile_content = _generate_dockerfile(is_fastapi_mode=_is_fastapi)
     dockerignore_content = _generate_dockerignore()
     env_example_content = _generate_env_example(workflow_dict)
@@ -286,12 +303,17 @@ async def upload_workflow(file: UploadFile = File(...)) -> GenerateResponse:
         archive.writestr("workflow_meta.json", json.dumps(workflow_meta, indent=2))
 
     from backend.handlers.registry import get_supported_types
+
     supported_set = set(get_supported_types())
     nodes_preview = [
-        NodePreview(name=node.name, type=node.type, handled=(node.type.lower() in supported_set))
+        NodePreview(
+            name=node.name, type=node.type, handled=(node.type.lower() in supported_set)
+        )
         for node in workflow.nodes
     ]
-    warnings = [PipelineWarning(node_name="pipeline", message=w) for w in result.warnings]
+    warnings = [
+        PipelineWarning(node_name="pipeline", message=w) for w in result.warnings
+    ]
 
     return GenerateResponse(
         workflow_name=workflow.name,
@@ -336,8 +358,6 @@ async def download_generated_zip(download_id: str) -> FileResponse:
         filename=download_filename,
         background=BackgroundTask(lambda: zip_path.unlink(missing_ok=True)),
     )
-
-
 
 
 if __name__ == "__main__":

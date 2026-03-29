@@ -165,9 +165,7 @@ def find_merge_point(G: nx.DiGraph, branch_node_name: str) -> str | None:
         return None
 
     # Collect all nodes reachable from each branch output.
-    reachable_sets = [
-        nx.descendants(main_G, succ) | {succ} for succ in successors
-    ]
+    reachable_sets = [nx.descendants(main_G, succ) | {succ} for succ in successors]
 
     # The merge point candidates are nodes reachable from ALL branches.
     common_descendants = reachable_sets[0].intersection(*reachable_sets[1:])

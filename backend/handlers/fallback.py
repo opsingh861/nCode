@@ -39,7 +39,9 @@ class FallbackHandler:
             kind=IRNodeKind.STATEMENT,
             python_var=var,
             code_lines=code_lines,
-            warnings=[f"Unsupported node type: {node.type!r} — generated as pass-through stub"],
+            warnings=[
+                f"Unsupported node type: {node.type!r} — generated as pass-through stub"
+            ],
         )
 
     def supported_operations(self) -> list[str]:

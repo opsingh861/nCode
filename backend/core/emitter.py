@@ -12,10 +12,10 @@ from typing import Union
 
 from backend.core.ir import IRNode, IRNodeKind, IRProgram
 
-
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
+
 
 def emit_program(program: IRProgram) -> str:
     """Walk an IRProgram and return a Python source string."""
@@ -40,6 +40,7 @@ def emit_program(program: IRProgram) -> str:
 # Header
 # ---------------------------------------------------------------------------
 
+
 def _emit_header(program: IRProgram) -> str:
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     return (
@@ -54,16 +55,61 @@ def _emit_header(program: IRProgram) -> str:
 # Imports
 # ---------------------------------------------------------------------------
 
-_STDLIB = frozenset({
-    "abc", "ast", "base64", "collections", "contextlib", "csv", "dataclasses",
-    "datetime", "enum", "functools", "hashlib", "hmac", "html", "http",
-    "inspect", "io", "itertools", "json", "logging", "math", "operator",
-    "os", "pathlib", "pprint", "queue", "random", "re", "shlex", "shutil",
-    "signal", "smtplib", "socket", "sqlite3", "ssl", "string", "struct",
-    "subprocess", "sys", "tempfile", "textwrap", "threading", "time",
-    "traceback", "types", "typing", "unittest", "urllib", "uuid", "warnings",
-    "xml", "zipfile",
-})
+_STDLIB = frozenset(
+    {
+        "abc",
+        "ast",
+        "base64",
+        "collections",
+        "contextlib",
+        "csv",
+        "dataclasses",
+        "datetime",
+        "enum",
+        "functools",
+        "hashlib",
+        "hmac",
+        "html",
+        "http",
+        "inspect",
+        "io",
+        "itertools",
+        "json",
+        "logging",
+        "math",
+        "operator",
+        "os",
+        "pathlib",
+        "pprint",
+        "queue",
+        "random",
+        "re",
+        "shlex",
+        "shutil",
+        "signal",
+        "smtplib",
+        "socket",
+        "sqlite3",
+        "ssl",
+        "string",
+        "struct",
+        "subprocess",
+        "sys",
+        "tempfile",
+        "textwrap",
+        "threading",
+        "time",
+        "traceback",
+        "types",
+        "typing",
+        "unittest",
+        "urllib",
+        "uuid",
+        "warnings",
+        "xml",
+        "zipfile",
+    }
+)
 
 
 def _import_sort_key(line: str) -> tuple[int, str]:
@@ -76,18 +122,21 @@ def _import_sort_key(line: str) -> tuple[int, str]:
         return (2, root)
     return (1, root)
 
+
 # Imports always injected so that expression-engine translations (math.floor,
 # functools.reduce, random.random, re.search, etc.) work without handlers
 # needing to explicitly track which functions were used in expressions.
-_EXPRESSION_ENGINE_IMPORTS: frozenset[str] = frozenset({
-    "import functools",
-    "import json",
-    "import math",
-    "import os",
-    "import random",
-    "import re",
-    "from datetime import datetime, date, timezone, timedelta",
-})
+_EXPRESSION_ENGINE_IMPORTS: frozenset[str] = frozenset(
+    {
+        "import functools",
+        "import json",
+        "import math",
+        "import os",
+        "import random",
+        "import re",
+        "from datetime import datetime, date, timezone, timedelta",
+    }
+)
 
 
 def _emit_imports(program: IRProgram) -> str:
@@ -108,6 +157,7 @@ def _emit_imports(program: IRProgram) -> str:
 # ---------------------------------------------------------------------------
 # FastAPI body
 # ---------------------------------------------------------------------------
+
 
 def _emit_fastapi_body(program: IRProgram) -> str:
     parts: list[str] = []
@@ -136,7 +186,7 @@ def _emit_fastapi_body(program: IRProgram) -> str:
         parts.append(_emit_node(program.nodes[trigger_idx], indent_level=0))
 
         # All subsequent nodes are INSIDE the route function (indented by 1)
-        body_nodes = program.nodes[trigger_idx + 1:]
+        body_nodes = program.nodes[trigger_idx + 1 :]
         for ir_node in body_nodes:
             parts.append(_emit_node(ir_node, indent_level=1))
 
@@ -144,10 +194,10 @@ def _emit_fastapi_body(program: IRProgram) -> str:
         # Check only the last non-empty direct code line (not lines inside nested
         # functions/loops which may have their own return statements).
         if body_nodes:
-            last_direct_lines = [
-                ln for ln in body_nodes[-1].code_lines if ln.strip()
-            ]
-            last_direct_line = last_direct_lines[-1].strip() if last_direct_lines else ""
+            last_direct_lines = [ln for ln in body_nodes[-1].code_lines if ln.strip()]
+            last_direct_line = (
+                last_direct_lines[-1].strip() if last_direct_lines else ""
+            )
             has_return = last_direct_line.startswith("return ")
             if not has_return:
                 last_var = body_nodes[-1].python_var
@@ -167,7 +217,9 @@ def _emit_fastapi_body(program: IRProgram) -> str:
         for ir_node in program.nodes:
             parts.append(_emit_node(ir_node, indent_level=0))
     parts.append('\nif __name__ == "__main__":')
-    parts.append('    uvicorn.run("__main__:app", host="0.0.0.0", port=8000, reload=False)')
+    parts.append(
+        '    uvicorn.run("__main__:app", host="0.0.0.0", port=8000, reload=False)'
+    )
 
     return "\n".join(parts)
 
@@ -175,6 +227,7 @@ def _emit_fastapi_body(program: IRProgram) -> str:
 # ---------------------------------------------------------------------------
 # Script body
 # ---------------------------------------------------------------------------
+
 
 def _emit_script_body(program: IRProgram) -> str:
     parts: list[str] = []
@@ -210,6 +263,7 @@ def _emit_script_body(program: IRProgram) -> str:
 # ---------------------------------------------------------------------------
 # Node emitter (recursive)
 # ---------------------------------------------------------------------------
+
 
 def _emit_node(ir_node: IRNode, indent_level: int = 0) -> str:
     """Emit a single IRNode as Python source, handling branches recursively."""

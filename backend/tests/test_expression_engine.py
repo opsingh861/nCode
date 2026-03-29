@@ -17,6 +17,7 @@ def ctx() -> VariableContext:
 # VariableContext tests
 # ---------------------------------------------------------------------------
 
+
 class TestVariableContext:
     def test_register_and_resolve(self):
         vc = VariableContext()
@@ -44,6 +45,7 @@ class TestVariableContext:
 # translate_expression: plain strings
 # ---------------------------------------------------------------------------
 
+
 class TestTranslatePlainStrings:
     def test_plain_string_returns_repr(self, ctx):
         result = translate_expression("hello world", ctx)
@@ -61,6 +63,7 @@ class TestTranslatePlainStrings:
 # ---------------------------------------------------------------------------
 # translate_expression: pure expression templates
 # ---------------------------------------------------------------------------
+
 
 class TestPureExpressions:
     def test_json_field(self, ctx):
@@ -122,6 +125,7 @@ class TestPureExpressions:
 # translate_expression: mixed f-string templates
 # ---------------------------------------------------------------------------
 
+
 class TestMixedTemplates:
     def test_mixed_string_with_expression(self, ctx):
         result = translate_expression("Hello, {{ $json.name }}!", ctx)
@@ -137,6 +141,7 @@ class TestMixedTemplates:
 # ---------------------------------------------------------------------------
 # translate_expression: JS method translations
 # ---------------------------------------------------------------------------
+
 
 class TestJsMethods:
     def test_to_lower_case(self, ctx):
@@ -172,6 +177,7 @@ class TestJsMethods:
 # translate_expression: ternary operator
 # ---------------------------------------------------------------------------
 
+
 class TestTernary:
     def test_simple_ternary(self, ctx):
         result = translate_expression("={{ $json.x > 0 ? 'pos' : 'neg' }}", ctx)
@@ -188,7 +194,7 @@ class TestTernary:
 # Phase 2: Arrow function translations
 # ---------------------------------------------------------------------------
 
-from backend.core.expression_engine import _parse_arrow_fn, _arrow_body_translate
+from backend.core.expression_engine import _arrow_body_translate, _parse_arrow_fn
 
 
 class TestParseArrowFn:
@@ -270,9 +276,7 @@ class TestMapWithArrow:
 
 class TestFilterWithArrow:
     def test_filter_simple_condition(self, ctx):
-        result = translate_expression(
-            "={{ $json.items.filter(x => x.active) }}", ctx
-        )
+        result = translate_expression("={{ $json.items.filter(x => x.active) }}", ctx)
         assert "for x in" in result
         assert "if" in result
         assert '["active"]' in result
@@ -288,9 +292,7 @@ class TestFilterWithArrow:
 
 class TestFindWithArrow:
     def test_find_returns_next(self, ctx):
-        result = translate_expression(
-            "={{ $json.users.find(u => u.id === 1) }}", ctx
-        )
+        result = translate_expression("={{ $json.users.find(u => u.id === 1) }}", ctx)
         assert "next(" in result
         assert "None" in result
         assert '["id"]' in result
@@ -306,16 +308,12 @@ class TestFindWithArrow:
 
 class TestSomeEveryWithArrow:
     def test_some(self, ctx):
-        result = translate_expression(
-            "={{ $json.items.some(x => x.active) }}", ctx
-        )
+        result = translate_expression("={{ $json.items.some(x => x.active) }}", ctx)
         assert "any(" in result
         assert "for x in" in result
 
     def test_every(self, ctx):
-        result = translate_expression(
-            "={{ $json.items.every(x => x.valid) }}", ctx
-        )
+        result = translate_expression("={{ $json.items.every(x => x.valid) }}", ctx)
         assert "all(" in result
         assert "for x in" in result
 
@@ -329,9 +327,7 @@ class TestReduceWithArrow:
         assert "lambda acc, cur:" in result
 
     def test_reduce_no_init(self, ctx):
-        result = translate_expression(
-            "={{ $json.nums.reduce((a, b) => a + b) }}", ctx
-        )
+        result = translate_expression("={{ $json.nums.reduce((a, b) => a + b) }}", ctx)
         assert "functools.reduce(" in result
 
 
@@ -341,9 +337,7 @@ class TestSortWithArrow:
         assert "sorted(" in result
 
     def test_sort_key_fn(self, ctx):
-        result = translate_expression(
-            "={{ $json.items.sort(x => x.name) }}", ctx
-        )
+        result = translate_expression("={{ $json.items.sort(x => x.name) }}", ctx)
         assert "sorted(" in result
         assert "key=" in result
 
@@ -359,6 +353,7 @@ class TestSortWithArrow:
 # Phase 2: Expanded string methods
 # ---------------------------------------------------------------------------
 
+
 class TestStringMethodsExpanded:
     def test_join(self, ctx):
         result = translate_expression("={{ $json.parts.join(', ') }}", ctx)
@@ -369,15 +364,11 @@ class TestStringMethodsExpanded:
         assert ".split(" in result
 
     def test_replace(self, ctx):
-        result = translate_expression(
-            "={{ $json.text.replace('foo', 'bar') }}", ctx
-        )
+        result = translate_expression("={{ $json.text.replace('foo', 'bar') }}", ctx)
         assert ".replace(" in result
 
     def test_replace_all(self, ctx):
-        result = translate_expression(
-            "={{ $json.text.replaceAll(' ', '_') }}", ctx
-        )
+        result = translate_expression("={{ $json.text.replaceAll(' ', '_') }}", ctx)
         assert ".replace(" in result
 
     def test_pad_start(self, ctx):
@@ -413,6 +404,7 @@ class TestStringMethodsExpanded:
 # Phase 2: Expanded array methods
 # ---------------------------------------------------------------------------
 
+
 class TestArrayMethodsExpanded:
     def test_flat(self, ctx):
         result = translate_expression("={{ $json.matrix.flat() }}", ctx)
@@ -420,9 +412,7 @@ class TestArrayMethodsExpanded:
         assert "for _x in _sub" in result
 
     def test_flat_map(self, ctx):
-        result = translate_expression(
-            "={{ $json.items.flatMap(x => x.tags) }}", ctx
-        )
+        result = translate_expression("={{ $json.items.flatMap(x => x.tags) }}", ctx)
         assert "for _y in" in result
 
     def test_reverse(self, ctx):
@@ -441,6 +431,7 @@ class TestArrayMethodsExpanded:
 # ---------------------------------------------------------------------------
 # Phase 2: Math methods
 # ---------------------------------------------------------------------------
+
 
 class TestMathMethods:
     def test_floor(self, ctx):
@@ -488,6 +479,7 @@ class TestMathMethods:
 # Phase 2: Type converters
 # ---------------------------------------------------------------------------
 
+
 class TestTypeConverters:
     def test_string_fn(self, ctx):
         result = translate_expression("={{ String($json.num) }}", ctx)
@@ -514,6 +506,7 @@ class TestTypeConverters:
 # Phase 2: $fromAI improved handling
 # ---------------------------------------------------------------------------
 
+
 class TestFromAI:
     def test_from_ai_has_key(self, ctx):
         result = translate_expression(
@@ -523,6 +516,7 @@ class TestFromAI:
         assert "TODO" in result
 
     def test_from_ai_placeholder(self, ctx):
-        result = translate_expression("={{ $fromAI('count', 'Number', 'number', 0) }}", ctx)
+        result = translate_expression(
+            "={{ $fromAI('count', 'Number', 'number', 0) }}", ctx
+        )
         assert "count" in result
-

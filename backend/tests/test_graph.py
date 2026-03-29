@@ -1,7 +1,7 @@
 """Tests for the DAG builder and graph analysis (backend/core/graph.py)."""
 
-import pytest
 import networkx as nx
+import pytest
 
 from backend.core.graph import (
     build_dag,
@@ -14,10 +14,10 @@ from backend.core.graph import (
 )
 from backend.models.workflow import N8nConnectionTarget, N8nNode, N8nWorkflow
 
-
 # ---------------------------------------------------------------------------
 # Workflow fixture helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_node(name: str, node_type: str = "n8n-nodes-base.set", **extra) -> dict:
     return {
@@ -31,11 +31,13 @@ def _make_node(name: str, node_type: str = "n8n-nodes-base.set", **extra) -> dic
 
 
 def _make_workflow(nodes: list[dict], connections: dict) -> N8nWorkflow:
-    return N8nWorkflow.model_validate({
-        "name": "Test Workflow",
-        "nodes": nodes,
-        "connections": connections,
-    })
+    return N8nWorkflow.model_validate(
+        {
+            "name": "Test Workflow",
+            "nodes": nodes,
+            "connections": connections,
+        }
+    )
 
 
 def _linear_conn(source: str, target: str) -> dict:
@@ -58,6 +60,7 @@ def _merge_connections(*conns: dict) -> dict:
 # ---------------------------------------------------------------------------
 # build_dag
 # ---------------------------------------------------------------------------
+
 
 class TestBuildDag:
     def test_linear_graph(self):
@@ -90,7 +93,13 @@ class TestBuildDag:
     def test_edge_connection_type(self):
         wf = _make_workflow(
             [_make_node("LLM"), _make_node("Agent")],
-            {"LLM": {"ai_languageModel": [[{"node": "Agent", "type": "ai_languageModel", "index": 0}]]}},
+            {
+                "LLM": {
+                    "ai_languageModel": [
+                        [{"node": "Agent", "type": "ai_languageModel", "index": 0}]
+                    ]
+                }
+            },
         )
         G = build_dag(wf)
         edge_data = G.edges["LLM", "Agent"]
@@ -100,6 +109,7 @@ class TestBuildDag:
 # ---------------------------------------------------------------------------
 # topological_order
 # ---------------------------------------------------------------------------
+
 
 class TestTopologicalOrder:
     def test_linear_order(self):
@@ -136,6 +146,7 @@ class TestTopologicalOrder:
 # ---------------------------------------------------------------------------
 # find_merge_point
 # ---------------------------------------------------------------------------
+
 
 class TestFindMergePoint:
     def _diamond_workflow(self) -> tuple[N8nWorkflow, nx.DiGraph]:
@@ -180,6 +191,7 @@ class TestFindMergePoint:
 # get_branch_subgraph
 # ---------------------------------------------------------------------------
 
+
 class TestGetBranchSubgraph:
     def test_true_branch_nodes(self):
         wf = _make_workflow(
@@ -190,9 +202,11 @@ class TestGetBranchSubgraph:
                 _make_node("Merge"),
             ],
             {
-                "IF": {"main": [
-                    [{"node": "TrueA", "type": "main", "index": 0}],
-                ]},
+                "IF": {
+                    "main": [
+                        [{"node": "TrueA", "type": "main", "index": 0}],
+                    ]
+                },
                 "TrueA": {"main": [[{"node": "TrueB", "type": "main", "index": 0}]]},
                 "TrueB": {"main": [[{"node": "Merge", "type": "main", "index": 0}]]},
             },
@@ -207,6 +221,7 @@ class TestGetBranchSubgraph:
 # ---------------------------------------------------------------------------
 # classify_node
 # ---------------------------------------------------------------------------
+
 
 class TestClassifyNode:
     def test_trigger_classification(self):
@@ -225,10 +240,12 @@ class TestClassifyNode:
                 _make_node("B"),
             ],
             {
-                "IF": {"main": [
-                    [{"node": "A", "type": "main", "index": 0}],
-                    [{"node": "B", "type": "main", "index": 0}],
-                ]},
+                "IF": {
+                    "main": [
+                        [{"node": "A", "type": "main", "index": 0}],
+                        [{"node": "B", "type": "main", "index": 0}],
+                    ]
+                },
             },
         )
         G = build_dag(wf)
@@ -247,6 +264,7 @@ class TestClassifyNode:
 # get_ai_sub_nodes
 # ---------------------------------------------------------------------------
 
+
 class TestGetAiSubNodes:
     def test_llm_sub_node(self):
         wf = _make_workflow(
@@ -255,7 +273,11 @@ class TestGetAiSubNodes:
                 _make_node("Agent", "@n8n/n8n-nodes-langchain.agent"),
             ],
             {
-                "GPT4": {"ai_languageModel": [[{"node": "Agent", "type": "ai_languageModel", "index": 0}]]},
+                "GPT4": {
+                    "ai_languageModel": [
+                        [{"node": "Agent", "type": "ai_languageModel", "index": 0}]
+                    ]
+                },
             },
         )
         G = build_dag(wf)
@@ -272,6 +294,7 @@ class TestGetAiSubNodes:
 # ---------------------------------------------------------------------------
 # has_cycle
 # ---------------------------------------------------------------------------
+
 
 class TestHasCycle:
     def test_no_cycle(self):

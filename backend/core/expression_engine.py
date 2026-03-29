@@ -20,10 +20,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-
 # ---------------------------------------------------------------------------
 # Variable context
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class VariableContext:
@@ -59,6 +59,7 @@ class VariableContext:
 # ---------------------------------------------------------------------------
 # Utility helpers
 # ---------------------------------------------------------------------------
+
 
 def _sanitize_var(name: str) -> str:
     """Convert a display name to a safe Python variable stem."""
@@ -109,7 +110,8 @@ _JS_STOP_WORDS = (
     "trim|toLowerCase|toUpperCase|startsWith|endsWith|includes|indexOf|"
     "slice|split|join|concat|push|pop|shift|unshift|map|filter|reduce|"
     "some|every|find|findIndex|flat|flatMap|sort|reverse|forEach|toString|"
-    "valueOf|hasOwnProperty|length"
+    "valueOf|hasOwnProperty|length|replace|replaceAll|padStart|padEnd|"
+    "repeat|charAt|substring|substr|trimStart|trimEnd|match|test"
 )
 _JSON_DOT_RE = re.compile(
     r"\$json\.(?P<path>[a-zA-Z_]\w*"
@@ -166,21 +168,21 @@ _JSON_STRINGIFY_RE = re.compile(r"\bJSON\.stringify\s*\((?P<arg>[^)]+)\)")
 # Array.isArray
 _ISARRAY_RE = re.compile(r"\bArray\.isArray\s*\((?P<arg>[^)]+)\)")
 # .indexOf(x)
-_INDEXOF_RE = re.compile(r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.indexOf\((?P<arg>[^)]+)\)""")
-# .slice(a, b)
-_SLICE_RE = re.compile(
-    r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.slice\((?P<args>[^)]+)\)"""
+_INDEXOF_RE = re.compile(
+    r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.indexOf\((?P<arg>[^)]+)\)"""
 )
+# .slice(a, b)
+_SLICE_RE = re.compile(r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.slice\((?P<args>[^)]+)\)""")
 # .concat(other)
 _CONCAT_RE = re.compile(
     r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.concat\((?P<arg>[^)]+)\)"""
 )
 # .push(x) — translates to .append(x), returns the expression (side-effect)
-_PUSH_RE = re.compile(
-    r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.push\((?P<arg>[^)]+)\)"""
-)
+_PUSH_RE = re.compile(r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.push\((?P<arg>[^)]+)\)""")
 # .map(fn) / .filter(fn) / and more array higher-order methods
-_MAP_RE = re.compile(r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.map\((?P<fn>(?:[^()]|\([^)]*\))*)\)""")
+_MAP_RE = re.compile(
+    r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.map\((?P<fn>(?:[^()]|\([^)]*\))*)\)"""
+)
 _FILTER_RE = re.compile(
     r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.filter\((?P<fn>(?:[^()]|\([^)]*\))*)\)"""
 )
@@ -228,7 +230,9 @@ _PAD_END_RE = re.compile(
 )
 _REPEAT_RE = re.compile(r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.repeat\((?P<n>[^)]+)\)""")
 _CHAR_AT_RE = re.compile(r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.charAt\((?P<i>[^)]+)\)""")
-_SUBSTR_RE = re.compile(r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.substr\((?P<args>[^)]+)\)""")
+_SUBSTR_RE = re.compile(
+    r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.substr\((?P<args>[^)]+)\)"""
+)
 _SUBSTRING_RE = re.compile(
     r"""(?P<obj>[A-Za-z_][\w.\["'\]]*?)\.substring\((?P<args>[^)]+)\)"""
 )
@@ -306,16 +310,27 @@ def _arrow_body_translate(body: str, params: list[str]) -> str:
     """
     result = _apply_js_operators(body)
     for param in params:
-        # Match param.field.nested... where each segment is NOT followed by (
-        pattern = re.compile(
-            rf"\b{re.escape(param)}((?:\.[a-zA-Z_]\w*(?!\s*\())+)"
-        )
+        # Match param.field.nested chains. If the chain ends in a method call,
+        # keep only object-style segments as subscripts and preserve method syntax.
+        pattern = re.compile(rf"\b{re.escape(param)}((?:\.[a-zA-Z_]\w+)+)")
+
         def _repl(m: re.Match, _p: str = param) -> str:
             parts = m.group(1).split(".")[1:]  # skip leading empty str
+
+            # If immediately followed by "(", the last segment is a method name.
+            is_method_call = m.end() < len(result) and result[m.end()] == "("
+            method_name = None
+            if is_method_call and parts:
+                method_name = parts[-1]
+                parts = parts[:-1]
+
             r = _p
             for part in parts:
                 r += f'["{part}"]'
+            if method_name:
+                r += f".{method_name}"
             return r
+
         result = pattern.sub(_repl, result)
     return result
 
@@ -380,12 +395,18 @@ def _apply_js_methods(expr: str) -> str:
     result = result.replace(".startsWith(", ".startswith(")
     result = result.replace(".endsWith(", ".endswith(")
 
-    result = _INCLUDES_RE.sub(lambda m: f'({m.group("arg")} in {m.group("obj")})', result)
+    result = _INCLUDES_RE.sub(
+        lambda m: f'({m.group("arg")} in {m.group("obj")})', result
+    )
     result = _TOSTRING_RE.sub(lambda m: f'str({m.group("obj")})', result)
-    result = _INDEXOF_RE.sub(lambda m: f'{m.group("obj")}.find({m.group("arg")})', result)
+    result = _INDEXOF_RE.sub(
+        lambda m: f'{m.group("obj")}.find({m.group("arg")})', result
+    )
     result = _CONCAT_RE.sub(lambda m: f'({m.group("obj")} + {m.group("arg")})', result)
     result = _JOIN_RE.sub(lambda m: f'{m.group("sep")}.join({m.group("obj")})', result)
-    result = _SPLIT_RE.sub(lambda m: f'{m.group("obj")}.split({m.group("sep")})', result)
+    result = _SPLIT_RE.sub(
+        lambda m: f'{m.group("obj")}.split({m.group("sep")})', result
+    )
     # replaceAll before replace to avoid partial matching
     result = _REPLACE_ALL_RE.sub(
         lambda m: f'{m.group("obj")}.replace({m.group("a")}, {m.group("b")})', result
@@ -393,23 +414,29 @@ def _apply_js_methods(expr: str) -> str:
     result = _REPLACE_RE.sub(
         lambda m: f'{m.group("obj")}.replace({m.group("a")}, {m.group("b")})', result
     )
+
     def _pad_start_repl(m: re.Match) -> str:
         obj, n = m.group("obj"), m.group("n")
         c = m.group("c") or '"0"'
         return f"{obj}.rjust({n}, {c})"
+
     result = _PAD_START_RE.sub(_pad_start_repl, result)
+
     def _pad_end_repl(m: re.Match) -> str:
         obj, n = m.group("obj"), m.group("n")
         c = m.group("c") or '" "'
         return f"{obj}.ljust({n}, {c})"
+
     result = _PAD_END_RE.sub(_pad_end_repl, result)
     result = _REPEAT_RE.sub(lambda m: f'({m.group("obj")} * {m.group("n")})', result)
     result = _CHAR_AT_RE.sub(lambda m: f'{m.group("obj")}[{m.group("i")}]', result)
+
     def _substr_repl(m: re.Match) -> str:
         args = [a.strip() for a in m.group("args").split(",")]
         if len(args) == 1:
             return f"{m.group('obj')}[{args[0]}:]"
         return f"{m.group('obj')}[{args[0]}:{args[1]}]"
+
     result = _SUBSTRING_RE.sub(_substr_repl, result)
     result = _SUBSTR_RE.sub(_substr_repl, result)
     result = _MATCH_RE.sub(
@@ -447,7 +474,7 @@ def _apply_js_methods(expr: str) -> str:
             params, body = arrow
             param = params[0] if params else "_item"
             tbody = _arrow_body_translate(body, params)
-            return f'next(({param} for {param} in {obj} if {tbody}), None)'
+            return f"next(({param} for {param} in {obj} if {tbody}), None)"
         return f"next((_item for _item in {obj} if ({fn})(_item)), None)"
 
     def _hof_find_index(m: re.Match) -> str:
@@ -457,7 +484,7 @@ def _apply_js_methods(expr: str) -> str:
             params, body = arrow
             param = params[0] if params else "_item"
             tbody = _arrow_body_translate(body, params)
-            return f'next((_i for _i, {param} in enumerate({obj}) if {tbody}), -1)'
+            return f"next((_i for _i, {param} in enumerate({obj}) if {tbody}), -1)"
         return f"next((_i for _i, _item in enumerate({obj}) if ({fn})(_item)), -1)"
 
     def _hof_some(m: re.Match) -> str:
@@ -504,7 +531,9 @@ def _apply_js_methods(expr: str) -> str:
             tbody = _arrow_body_translate(body, params)
             if len(params) == 2:
                 a, b = params
-                return f"sorted({obj}, key=functools.cmp_to_key(lambda {a}, {b}: {tbody}))"
+                return (
+                    f"sorted({obj}, key=functools.cmp_to_key(lambda {a}, {b}: {tbody}))"
+                )
             param = params[0]
             return f"sorted({obj}, key=lambda {param}: {tbody})"
         return f"sorted({obj}, key={fn})"
@@ -543,11 +572,13 @@ def _apply_js_methods(expr: str) -> str:
         lambda m: f'(lambda _l, _v: (_l.append(_v), _l)[1])({m.group("obj")}, {m.group("arg")})',
         result,
     )
+
     def _slice_repl(m: re.Match) -> str:
         args = [a.strip() for a in m.group("args").split(",")]
         if len(args) == 1:
             return f"{m.group('obj')}[{args[0]}:]"
         return f"{m.group('obj')}[{args[0]}:{args[1]}]"
+
     result = _SLICE_RE.sub(_slice_repl, result)
 
     # ── Math methods ──────────────────────────────────────────────────────
@@ -580,7 +611,9 @@ def _apply_js_methods(expr: str) -> str:
     result = _BOOLEAN_FN_RE.sub(lambda m: f'bool({m.group("arg")})', result)
 
     # Date helpers
-    result = _DATE_NOW_RE.sub("int(datetime.now(timezone.utc).timestamp() * 1000)", result)
+    result = _DATE_NOW_RE.sub(
+        "int(datetime.now(timezone.utc).timestamp() * 1000)", result
+    )
     result = _NEW_DATE_ARGS_RE.sub(
         lambda m: f'datetime.fromisoformat({m.group("arg")})', result
     )
@@ -642,6 +675,7 @@ def _translate_js_template_literal(s: str, ctx: VariableContext) -> str:
 
     def _repl(m: re.Match) -> str:
         inner = m.group(1)
+
         # Replace ${expr} with {translated_expr}
         def _inner_repl(im: re.Match) -> str:
             raw_expr = im.group(1).strip()
@@ -724,7 +758,9 @@ def _translate_body(body: str, ctx: VariableContext) -> str:
     result = _JSON_DOT_RE.sub(_json_dot_repl, result)
 
     # --- Translate bare $json (no path) → current_var[0]["json"] ---
-    result = re.sub(r'\$json(?!\s*[\.\[])', lambda m: f'{ctx.current_var()}[0]["json"]', result)
+    result = re.sub(
+        r"\$json(?!\s*[\.\[])", lambda m: f'{ctx.current_var()}[0]["json"]', result
+    )
 
     # --- Translate $json["key"]... ---
     def _json_bracket_repl(m: re.Match) -> str:

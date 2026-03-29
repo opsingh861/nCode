@@ -26,6 +26,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+import backend.handlers  # noqa: F401 — triggers all @register side-effects via __init__.py
 from backend.core.emitter import emit_program
 from backend.core.expression_engine import VariableContext
 from backend.core.graph import (
@@ -40,7 +41,6 @@ from backend.core.graph import (
 )
 from backend.core.ir import IRNode, IRNodeKind, IRProgram
 from backend.core.post_processor import post_process
-import backend.handlers  # noqa: F401 — triggers all @register side-effects via __init__.py
 from backend.handlers import _ensure_all_registered  # noqa: F401
 from backend.handlers.base import GenerationContext
 from backend.handlers.fallback import FALLBACK
@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Result container
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PipelineResult:
@@ -71,6 +72,7 @@ class PipelineResult:
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def run_pipeline(raw: str | dict[str, Any]) -> PipelineResult:
     """Full transpilation pipeline.  Returns a PipelineResult."""

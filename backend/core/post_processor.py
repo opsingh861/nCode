@@ -29,7 +29,9 @@ def _apply_black(source: str, warnings: list[str]) -> str:
     try:
         black = importlib.import_module("black")
     except ImportError:
-        warnings.append("black is not installed; code will not be reformatted (pip install black)")
+        warnings.append(
+            "black is not installed; code will not be reformatted (pip install black)"
+        )
         return source
 
     mode = black.Mode(line_length=100, string_normalization=True, is_pyi=False)
@@ -47,7 +49,9 @@ def _apply_isort(source: str, warnings: list[str]) -> str:
     try:
         isort = importlib.import_module("isort")
     except ImportError:
-        warnings.append("isort is not installed; imports will not be sorted (pip install isort)")
+        warnings.append(
+            "isort is not installed; imports will not be sorted (pip install isort)"
+        )
         return source
 
     try:

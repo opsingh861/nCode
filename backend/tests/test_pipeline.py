@@ -9,14 +9,13 @@ Tests verify:
 """
 
 import json
+import pathlib
 import py_compile
 import tempfile
-import pathlib
 
 import pytest
 
 from backend.core.pipeline import PipelineResult, run_pipeline
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -50,9 +49,7 @@ MINIMAL_WORKFLOW = {
         },
     ],
     "connections": {
-        "Start": {
-            "main": [[{"node": "Set Data", "type": "main", "index": 0}]]
-        }
+        "Start": {"main": [[{"node": "Set Data", "type": "main", "index": 0}]]}
     },
 }
 
@@ -84,9 +81,7 @@ WEBHOOK_WORKFLOW = {
         },
     ],
     "connections": {
-        "Webhook": {
-            "main": [[{"node": "Respond", "type": "main", "index": 0}]]
-        }
+        "Webhook": {"main": [[{"node": "Respond", "type": "main", "index": 0}]]}
     },
 }
 
@@ -155,9 +150,12 @@ IF_WORKFLOW = {
 # Helper
 # ---------------------------------------------------------------------------
 
+
 def _compiles(source: str) -> bool:
     """Return True if *source* is valid Python syntax."""
-    with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        suffix=".py", mode="w", delete=False, encoding="utf-8"
+    ) as f:
         f.write(source)
         tmp_path = f.name
     try:
@@ -172,6 +170,7 @@ def _compiles(source: str) -> bool:
 # ---------------------------------------------------------------------------
 # PipelineResult structure tests
 # ---------------------------------------------------------------------------
+
 
 class TestPipelineResultFields:
     def test_returns_pipeline_result(self):
@@ -203,6 +202,7 @@ class TestPipelineResultFields:
 # Mode detection
 # ---------------------------------------------------------------------------
 
+
 class TestModeDetection:
     def test_manual_trigger_is_script_mode(self):
         result = run_pipeline(MINIMAL_WORKFLOW)
@@ -217,29 +217,31 @@ class TestModeDetection:
 # Code validity (syntax check)
 # ---------------------------------------------------------------------------
 
+
 class TestCodeValidity:
     def test_minimal_workflow_compiles(self):
         result = run_pipeline(MINIMAL_WORKFLOW)
-        assert _compiles(result.generated_code), (
-            f"Generated code has syntax errors:\n{result.generated_code[:500]}"
-        )
+        assert _compiles(
+            result.generated_code
+        ), f"Generated code has syntax errors:\n{result.generated_code[:500]}"
 
     def test_webhook_workflow_compiles(self):
         result = run_pipeline(WEBHOOK_WORKFLOW)
-        assert _compiles(result.generated_code), (
-            f"Generated code has syntax errors:\n{result.generated_code[:500]}"
-        )
+        assert _compiles(
+            result.generated_code
+        ), f"Generated code has syntax errors:\n{result.generated_code[:500]}"
 
     def test_if_workflow_compiles(self):
         result = run_pipeline(IF_WORKFLOW)
-        assert _compiles(result.generated_code), (
-            f"Generated code has syntax errors:\n{result.generated_code[:500]}"
-        )
+        assert _compiles(
+            result.generated_code
+        ), f"Generated code has syntax errors:\n{result.generated_code[:500]}"
 
 
 # ---------------------------------------------------------------------------
 # JSON string input
 # ---------------------------------------------------------------------------
+
 
 class TestJsonStringInput:
     def test_accepts_json_string(self):
@@ -254,6 +256,7 @@ class TestJsonStringInput:
 # ---------------------------------------------------------------------------
 # Edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeCases:
     def test_empty_connections(self):
@@ -297,11 +300,16 @@ class TestEdgeCases:
                 },
             ],
             "connections": {
-                "Trigger": {"main": [[{"node": "Disabled Node", "type": "main", "index": 0}]]}
+                "Trigger": {
+                    "main": [[{"node": "Disabled Node", "type": "main", "index": 0}]]
+                }
             },
         }
         result = run_pipeline(wf)
-        assert "Disabled Node" not in result.generated_code or "disabled" in result.generated_code.lower()
+        assert (
+            "Disabled Node" not in result.generated_code
+            or "disabled" in result.generated_code.lower()
+        )
 
     def test_unknown_node_type_uses_fallback(self):
         wf = {

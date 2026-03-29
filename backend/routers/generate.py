@@ -38,8 +38,7 @@ async def generate_workflow(body: N8nWorkflow) -> GenerateResponse:
         for t in result.supported_nodes + result.unsupported_nodes
     ]
     warnings = [
-        PipelineWarning(node_name="pipeline", message=w)
-        for w in result.warnings
+        PipelineWarning(node_name="pipeline", message=w) for w in result.warnings
     ]
 
     return GenerateResponse(

@@ -20,6 +20,7 @@ def _safe_var(name: str) -> str:
 # PostgreSQL
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.postgres")
 class PostgresHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -29,7 +30,9 @@ class PostgresHandler:
         params = node.parameters
 
         operation = str(params.get("operation", "executeQuery")).lower()
-        ctx.add_import("import psycopg2", "from psycopg2 import sql as _pg_sql", "import os")
+        ctx.add_import(
+            "import psycopg2", "from psycopg2 import sql as _pg_sql", "import os"
+        )
         ctx.add_package("psycopg2-binary")
 
         conn_lines = [
@@ -147,10 +150,17 @@ class PostgresHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
             python_var=var,
-            imports=["import psycopg2", "from psycopg2 import sql as _pg_sql", "import os"],
-            pip_packages=["psycopg2-binary"], code_lines=code_lines,
+            imports=[
+                "import psycopg2",
+                "from psycopg2 import sql as _pg_sql",
+                "import os",
+            ],
+            pip_packages=["psycopg2-binary"],
+            code_lines=code_lines,
             comment=f"PostgreSQL ({operation})",
         )
 
@@ -164,6 +174,7 @@ class PostgresHandler:
 # ---------------------------------------------------------------------------
 # MySQL
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.mySql", "n8n-nodes-base.mysql")
 class MySqlHandler:
@@ -241,9 +252,13 @@ class MySqlHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import pymysql", "import os", "import re"],
-            pip_packages=["pymysql"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import pymysql", "import os", "import re"],
+            pip_packages=["pymysql"],
+            code_lines=code_lines,
             comment=f"MySQL ({operation})",
         )
 
@@ -257,6 +272,7 @@ class MySqlHandler:
 # ---------------------------------------------------------------------------
 # MongoDB
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.mongoDb", "n8n-nodes-base.mongodb")
 class MongoDbHandler:
@@ -326,9 +342,13 @@ class MongoDbHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import pymongo", "import os"],
-            pip_packages=["pymongo"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import pymongo", "import os"],
+            pip_packages=["pymongo"],
+            code_lines=code_lines,
             comment=f"MongoDB ({operation}) on {collection!r}",
         )
 
@@ -342,6 +362,7 @@ class MongoDbHandler:
 # ---------------------------------------------------------------------------
 # Redis
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.redis")
 class RedisHandler:
@@ -404,9 +425,13 @@ class RedisHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import redis", "import os"],
-            pip_packages=["redis"], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import redis", "import os"],
+            pip_packages=["redis"],
+            code_lines=code_lines,
             comment=f"Redis ({operation})",
         )
 
@@ -420,6 +445,7 @@ class RedisHandler:
 # ---------------------------------------------------------------------------
 # PostgreSQL Tool (AI tool node for n8n agents)
 # ---------------------------------------------------------------------------
+
 
 @register(
     "n8n-nodes-base.postgresTool",
@@ -437,6 +463,7 @@ class PostgresToolHandler:
         query = str(params.get("query", "SELECT 1"))
         # Replace n8n $fromAI() expressions with a {sql_statement} placeholder
         import re as _re
+
         query_clean = _re.sub(r"\{\{.*?\}\}", "{sql_statement}", query)
 
         code_lines = [
@@ -447,7 +474,7 @@ class PostgresToolHandler:
             f"    _conn = None",
             f"    _cur = None",
             f"    try:",
-            f'        _conn = psycopg2.connect(',
+            f"        _conn = psycopg2.connect(",
             f'            host=os.environ.get("POSTGRES_HOST", "localhost"),',
             f'            port=int(os.environ.get("POSTGRES_PORT", "5432")),',
             f'            dbname=os.environ.get("POSTGRES_DB", ""),',
@@ -470,17 +497,20 @@ class PostgresToolHandler:
             f"            _cur.close()",
             f"        if _conn is not None:",
             f"            _conn.close()",
-            f'{var}_tool = Tool(',
-            f'    name={node.name!r},',
-            f'    func=_pg_tool_fn_{var},',
+            f"{var}_tool = Tool(",
+            f"    name={node.name!r},",
+            f"    func=_pg_tool_fn_{var},",
             f'    description="Execute SQL queries against a PostgreSQL database. Input should be a valid SQL statement.",',
             f")",
             f"{var}_output = {prev_var}",
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import os", "import psycopg2"],
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import os", "import psycopg2"],
             pip_packages=["psycopg2-binary", "langchain"],
             code_lines=code_lines,
             comment="PostgreSQL Tool (LangChain)",
@@ -496,6 +526,7 @@ class PostgresToolHandler:
 # ---------------------------------------------------------------------------
 # SQLite
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.sqlite")
 class SqliteHandler:
@@ -535,9 +566,13 @@ class SqliteHandler:
             ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, imports=["import sqlite3"],
-            pip_packages=[], code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            imports=["import sqlite3"],
+            pip_packages=[],
+            code_lines=code_lines,
             comment=f"SQLite ({operation})",
         )
 

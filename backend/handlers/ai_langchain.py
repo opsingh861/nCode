@@ -27,7 +27,9 @@ def _get_sub_nodes(ctx: GenerationContext, conn_type: str) -> list[N8nNode]:
     return ctx.ai_sub_nodes.get(conn_type, [])
 
 
-def _emit_llm_init(llm_nodes: list[N8nNode], ctx: GenerationContext) -> tuple[str, list[str], list[str]]:
+def _emit_llm_init(
+    llm_nodes: list[N8nNode], ctx: GenerationContext
+) -> tuple[str, list[str], list[str]]:
     """Return (llm_var_name, code_lines, packages) for the LLM model sub-node."""
     if not llm_nodes:
         return ("None", ["_llm = None  # No LLM model connected"], [])
@@ -35,7 +37,9 @@ def _emit_llm_init(llm_nodes: list[N8nNode], ctx: GenerationContext) -> tuple[st
     llm_node = llm_nodes[0]
     llm_type = llm_node.type.lower()
     params = llm_node.parameters
-    temperature = params.get("options", {}).get("temperature", params.get("temperature", 0.7))
+    temperature = params.get("options", {}).get(
+        "temperature", params.get("temperature", 0.7)
+    )
 
     def _extract_model(raw: Any, default: str) -> str:
         """Extract model name from n8n's resource-locator dict or plain string."""
@@ -44,7 +48,9 @@ def _emit_llm_init(llm_nodes: list[N8nNode], ctx: GenerationContext) -> tuple[st
         return str(raw) if raw else default
 
     if "openai" in llm_type or "chatgpt" in llm_type:
-        model_name = _extract_model(params.get("model", params.get("modelId")), "gpt-4o")
+        model_name = _extract_model(
+            params.get("model", params.get("modelId")), "gpt-4o"
+        )
         lines = [
             "import os",
             "from langchain_openai import ChatOpenAI",
@@ -53,7 +59,9 @@ def _emit_llm_init(llm_nodes: list[N8nNode], ctx: GenerationContext) -> tuple[st
         return ("_llm", lines, ["langchain-openai"])
 
     elif "anthropic" in llm_type or "claude" in llm_type:
-        model_name = _extract_model(params.get("model", params.get("modelId")), "claude-3-5-sonnet-20241022")
+        model_name = _extract_model(
+            params.get("model", params.get("modelId")), "claude-3-5-sonnet-20241022"
+        )
         lines = [
             "import os",
             "from langchain_anthropic import ChatAnthropic",
@@ -62,7 +70,10 @@ def _emit_llm_init(llm_nodes: list[N8nNode], ctx: GenerationContext) -> tuple[st
         return ("_llm", lines, ["langchain-anthropic"])
 
     elif "gemini" in llm_type or "google" in llm_type:
-        model_name = _extract_model(params.get("model", params.get("modelName", params.get("modelId"))), "gemini-1.5-pro")
+        model_name = _extract_model(
+            params.get("model", params.get("modelName", params.get("modelId"))),
+            "gemini-1.5-pro",
+        )
         lines = [
             "import os",
             "from langchain_google_genai import ChatGoogleGenerativeAI",
@@ -75,7 +86,9 @@ def _emit_llm_init(llm_nodes: list[N8nNode], ctx: GenerationContext) -> tuple[st
         return ("None", lines, [])
 
 
-def _emit_memory_init(mem_nodes: list[N8nNode], ctx: GenerationContext) -> tuple[str, list[str], list[str]]:
+def _emit_memory_init(
+    mem_nodes: list[N8nNode], ctx: GenerationContext
+) -> tuple[str, list[str], list[str]]:
     """Return (memory_var, code_lines, packages) for memory sub-node."""
     if not mem_nodes:
         return ("None", [], [])
@@ -125,10 +138,16 @@ def _emit_memory_init(mem_nodes: list[N8nNode], ctx: GenerationContext) -> tuple
             "    for _m in _msgs[-_max_msgs:]:",
             "        _hist.add_message(_m)",
         ]
-        return ("_get_session_history", lines, ["langchain", "langchain-core", "langchain-postgres", "psycopg[binary]"])
+        return (
+            "_get_session_history",
+            lines,
+            ["langchain", "langchain-core", "langchain-postgres", "psycopg[binary]"],
+        )
 
     if "buffer" in mem_type and "window" not in mem_type:
-        k = int(params.get("maxHistorySize", params.get("contextWindowLength", 10)) or 10)
+        k = int(
+            params.get("maxHistorySize", params.get("contextWindowLength", 10)) or 10
+        )
     elif "window" in mem_type or "bufferwindow" in mem_type:
         k = int(params.get("maxHistorySize", params.get("contextWindowLength", 5)) or 5)
     else:
@@ -161,7 +180,9 @@ def _emit_memory_init(mem_nodes: list[N8nNode], ctx: GenerationContext) -> tuple
     return ("_get_session_history", lines, ["langchain", "langchain-core"])
 
 
-def _emit_tools_init(tool_nodes: list[N8nNode], ctx: GenerationContext) -> tuple[str, list[str], list[str]]:
+def _emit_tools_init(
+    tool_nodes: list[N8nNode], ctx: GenerationContext
+) -> tuple[str, list[str], list[str]]:
     """Return (tools_var, code_lines, packages) for tool sub-nodes."""
     if not tool_nodes:
         return ("[]", [], [])
@@ -249,6 +270,7 @@ def _emit_tools_init(tool_nodes: list[N8nNode], ctx: GenerationContext) -> tuple
 # ---------------------------------------------------------------------------
 # AI Agent
 # ---------------------------------------------------------------------------
+
 
 @register(
     "@n8n/n8n-nodes-langchain.agent",
@@ -363,8 +385,12 @@ class AiAgentHandler:
         all_pkgs = list(set(llm_pkgs + mem_pkgs + tools_pkgs + ["langchain"]))
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, pip_packages=all_pkgs, code_lines=code_lines,
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            pip_packages=all_pkgs,
+            code_lines=code_lines,
             comment=f"AI Agent ({agent_type})",
         )
 
@@ -379,6 +405,7 @@ class AiAgentHandler:
 # Basic LLM Chain
 # ---------------------------------------------------------------------------
 
+
 @register("@n8n/n8n-nodes-langchain.chainLlm")
 class BasicLlmChainHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -391,7 +418,9 @@ class BasicLlmChainHandler:
         output_parser_nodes = _get_sub_nodes(ctx, "ai_outputParser")
         llm_var, llm_lines, llm_pkgs = _emit_llm_init(llm_nodes, ctx)
 
-        prompt_text = ctx.resolve_expr(str(params.get("prompt", params.get("text", "{input}"))))
+        prompt_text = ctx.resolve_expr(
+            str(params.get("prompt", params.get("text", "{input}")))
+        )
 
         code_lines = llm_lines + [
             "",
@@ -415,9 +444,13 @@ class BasicLlmChainHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, pip_packages=list(set(llm_pkgs + ["langchain"])),
-            code_lines=code_lines, comment="Basic LLM Chain",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            pip_packages=list(set(llm_pkgs + ["langchain"])),
+            code_lines=code_lines,
+            comment="Basic LLM Chain",
         )
 
     def supported_operations(self) -> list[str]:
@@ -430,6 +463,7 @@ class BasicLlmChainHandler:
 # ---------------------------------------------------------------------------
 # Summarization Chain
 # ---------------------------------------------------------------------------
+
 
 @register("@n8n/n8n-nodes-langchain.chainSummarization")
 class SummarizationChainHandler:
@@ -464,9 +498,13 @@ class SummarizationChainHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, pip_packages=list(set(llm_pkgs + ["langchain"])),
-            code_lines=code_lines, comment=f"Summarization Chain ({chain_type})",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            pip_packages=list(set(llm_pkgs + ["langchain"])),
+            code_lines=code_lines,
+            comment=f"Summarization Chain ({chain_type})",
         )
 
     def supported_operations(self) -> list[str]:
@@ -479,6 +517,7 @@ class SummarizationChainHandler:
 # ---------------------------------------------------------------------------
 # Q&A Chain / Retrieval QA
 # ---------------------------------------------------------------------------
+
 
 @register("@n8n/n8n-nodes-langchain.chainRetrievalQa")
 class QaChainHandler:
@@ -511,9 +550,13 @@ class QaChainHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, pip_packages=list(set(llm_pkgs + ["langchain"])),
-            code_lines=code_lines, comment="Q&A (Retrieval) Chain",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            pip_packages=list(set(llm_pkgs + ["langchain"])),
+            code_lines=code_lines,
+            comment="Q&A (Retrieval) Chain",
         )
 
     def supported_operations(self) -> list[str]:
@@ -527,6 +570,7 @@ class QaChainHandler:
 # Text Classifier
 # ---------------------------------------------------------------------------
 
+
 @register("@n8n/n8n-nodes-langchain.textClassifier")
 class TextClassifierHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -539,7 +583,11 @@ class TextClassifierHandler:
         llm_var, llm_lines, llm_pkgs = _emit_llm_init(llm_nodes, ctx)
 
         categories = params.get("categories", {}).get("categories", [])
-        cat_names = [str(c.get("category", f"category_{i}")) for i, c in enumerate(categories) if isinstance(c, dict)]
+        cat_names = [
+            str(c.get("category", f"category_{i}"))
+            for i, c in enumerate(categories)
+            if isinstance(c, dict)
+        ]
         field = str(params.get("inputText", "text"))
 
         code_lines = llm_lines + [
@@ -563,9 +611,13 @@ class TextClassifierHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, pip_packages=list(set(llm_pkgs + ["langchain"])),
-            code_lines=code_lines, comment="Text Classifier",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            pip_packages=list(set(llm_pkgs + ["langchain"])),
+            code_lines=code_lines,
+            comment="Text Classifier",
         )
 
     def supported_operations(self) -> list[str]:
@@ -579,6 +631,7 @@ class TextClassifierHandler:
 # Information Extractor
 # ---------------------------------------------------------------------------
 
+
 @register("@n8n/n8n-nodes-langchain.informationExtractor")
 class InformationExtractorHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -591,10 +644,18 @@ class InformationExtractorHandler:
         llm_var, llm_lines, llm_pkgs = _emit_llm_init(llm_nodes, ctx)
 
         attributes_spec = params.get("attributes", {})
-        attributes = attributes_spec.get("attributes", []) if isinstance(attributes_spec, dict) else []
+        attributes = (
+            attributes_spec.get("attributes", [])
+            if isinstance(attributes_spec, dict)
+            else []
+        )
         field = str(params.get("text", "text"))
 
-        attr_list = [str(a.get("name", "")) for a in attributes if isinstance(a, dict) and a.get("name")]
+        attr_list = [
+            str(a.get("name", ""))
+            for a in attributes
+            if isinstance(a, dict) and a.get("name")
+        ]
 
         code_lines = llm_lines + [
             "",
@@ -623,9 +684,13 @@ class InformationExtractorHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, pip_packages=list(set(llm_pkgs + ["langchain"])),
-            code_lines=code_lines, comment="Information Extractor",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            pip_packages=list(set(llm_pkgs + ["langchain"])),
+            code_lines=code_lines,
+            comment="Information Extractor",
         )
 
     def supported_operations(self) -> list[str]:
@@ -638,6 +703,7 @@ class InformationExtractorHandler:
 # ---------------------------------------------------------------------------
 # Sentiment Analysis
 # ---------------------------------------------------------------------------
+
 
 @register("@n8n/n8n-nodes-langchain.sentimentAnalysis")
 class SentimentAnalysisHandler:
@@ -667,9 +733,13 @@ class SentimentAnalysisHandler:
         ]
 
         return IRNode(
-            node_id=node.id, node_name=node.name, kind=IRNodeKind.STATEMENT,
-            python_var=var, pip_packages=list(set(llm_pkgs + ["langchain"])),
-            code_lines=code_lines, comment="Sentiment Analysis",
+            node_id=node.id,
+            node_name=node.name,
+            kind=IRNodeKind.STATEMENT,
+            python_var=var,
+            pip_packages=list(set(llm_pkgs + ["langchain"])),
+            code_lines=code_lines,
+            comment="Sentiment Analysis",
         )
 
     def supported_operations(self) -> list[str]:

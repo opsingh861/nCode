@@ -14,12 +14,12 @@ from enum import Enum
 class IRNodeKind(Enum):
     """Classifies the structural role of an IR node in the generated program."""
 
-    STATEMENT = "statement"        # Simple sequential statement(s)
-    IF_BRANCH = "if_branch"        # if/elif/else conditional
+    STATEMENT = "statement"  # Simple sequential statement(s)
+    IF_BRANCH = "if_branch"  # if/elif/else conditional
     SWITCH_BRANCH = "switch_branch"  # Multi-way switch/match
-    FOR_LOOP = "for_loop"          # For loop (split-in-batches etc.)
+    FOR_LOOP = "for_loop"  # For loop (split-in-batches etc.)
     FUNCTION_DEF = "function_def"  # Function definition
-    TRY_EXCEPT = "try_except"      # try/except block
+    TRY_EXCEPT = "try_except"  # try/except block
 
 
 @dataclass

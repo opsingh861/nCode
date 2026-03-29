@@ -31,7 +31,7 @@ jobs:
         run: black --check backend/
 
       - name: Check import order (isort)
-        run: isort --check-only backend/
+        run: isort --check-only --profile black backend/
 
       - name: Run tests with coverage
         run: |

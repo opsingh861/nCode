@@ -29,9 +29,9 @@ def _generate_branch_nodes(
     Each node name in *branch_nodes* is marked as processed in ctx.processed_nodes
     so the top-level pipeline loop skips them.
     """
-    from backend.handlers.registry import get_handler
-    from backend.handlers.fallback import FALLBACK
     from backend.core.graph import AI_CONNECTION_TYPES, get_ai_sub_nodes
+    from backend.handlers.fallback import FALLBACK
+    from backend.handlers.registry import get_handler
 
     ir_nodes: list[IRNode] = []
     node_map = ctx.all_node_map
@@ -98,6 +98,7 @@ def _generate_branch_nodes(
 # ---------------------------------------------------------------------------
 # Condition translation helpers
 # ---------------------------------------------------------------------------
+
 
 def _translate_condition_v1(condition: dict, ctx: GenerationContext) -> str:
     """Translate a v1-style condition dict to a Python boolean expression."""
@@ -172,7 +173,9 @@ def _conditions_to_python(conditions_spec: Any, ctx: GenerationContext) -> str:
         combinator = str(conditions_spec.get("combinator", "and")).lower()
         conditions = conditions_spec.get("conditions", [])
         python_op = " and " if combinator == "and" else " or "
-        parts = [_translate_condition_v2(c, ctx) for c in conditions if isinstance(c, dict)]
+        parts = [
+            _translate_condition_v2(c, ctx) for c in conditions if isinstance(c, dict)
+        ]
         if not parts:
             return "True"
         return f"({python_op.join(parts)})"
@@ -191,7 +194,11 @@ def _conditions_to_python(conditions_spec: Any, ctx: GenerationContext) -> str:
         return f"({python_op.join(conds)})"
 
     if isinstance(conditions_spec, list):
-        parts = [_translate_condition_v1(c, ctx) for c in conditions_spec if isinstance(c, dict)]
+        parts = [
+            _translate_condition_v1(c, ctx)
+            for c in conditions_spec
+            if isinstance(c, dict)
+        ]
         return f"({' and '.join(parts)})" if parts else "True"
 
     return "True"
@@ -200,6 +207,7 @@ def _conditions_to_python(conditions_spec: Any, ctx: GenerationContext) -> str:
 # ---------------------------------------------------------------------------
 # IF Node
 # ---------------------------------------------------------------------------
+
 
 @register("n8n-nodes-base.if")
 class IfNodeHandler:
@@ -300,6 +308,7 @@ class IfNodeHandler:
 # Switch Node
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.switch")
 class SwitchNodeHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -396,6 +405,7 @@ class SwitchNodeHandler:
 # Merge Node
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.merge")
 class MergeNodeHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -411,6 +421,7 @@ class MergeNodeHandler:
         G = ctx.dag
         if G.number_of_nodes() > 0:
             from backend.core.graph import get_merge_input_vars
+
             input_vars = get_merge_input_vars(G, node.name, ctx.var_context)
 
         # Fall back to current prev_var if DAG resolution yields nothing
@@ -434,7 +445,9 @@ class MergeNodeHandler:
         elif mode in ("keepmatches", "innerjoin"):
             join_key = ctx.resolve_expr(
                 str(
-                    params.get("joinMode", {}).get("mergeByFields", {}).get("clashHandling", "")
+                    params.get("joinMode", {})
+                    .get("mergeByFields", {})
+                    .get("clashHandling", "")
                     or params.get("propertyName1", "id")
                 )
             )
@@ -465,7 +478,9 @@ class MergeNodeHandler:
             ]
         elif mode in ("choosebranch", "passthrough"):
             branch_idx = int(params.get("chooseBranchMode", {}).get("output", 0) or 0)
-            selected = input_vars[branch_idx] if branch_idx < len(input_vars) else prev_var
+            selected = (
+                input_vars[branch_idx] if branch_idx < len(input_vars) else prev_var
+            )
             code_lines = [
                 f"# Merge (choose branch {branch_idx}): pass through selected branch",
                 f"{var}_output = {selected}  # branch {branch_idx} selected",
@@ -502,6 +517,7 @@ class MergeNodeHandler:
 # Split In Batches
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.splitInBatches")
 class SplitInBatchesHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -511,7 +527,7 @@ class SplitInBatchesHandler:
         params = node.parameters
 
         batch_size = int(params.get("batchSize", 10))
-        
+
         code_lines = [
             f"# Split In Batches: process {batch_size} items at a time",
             f"{var}_batch_size = {batch_size}",
@@ -543,6 +559,7 @@ class SplitInBatchesHandler:
 # Wait Node
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.wait")
 class WaitNodeHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -552,7 +569,7 @@ class WaitNodeHandler:
         params = node.parameters
 
         resume_mode = str(params.get("resume", "timeInterval")).lower()
-        
+
         if resume_mode == "timeinterval":
             amount = params.get("amount", 1)
             unit = str(params.get("unit", "hours")).lower()
@@ -597,6 +614,7 @@ class WaitNodeHandler:
 # Respond to Webhook
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.respondToWebhook")
 class RespondToWebhookHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -606,9 +624,12 @@ class RespondToWebhookHandler:
         params = node.parameters
 
         respond_with = str(params.get("respondWith", "json")).lower()
-        
+
         if respond_with == "json":
-            response_body = ctx.resolve_expr(str(params.get("responseBody", ""))) or f'{prev_var}[0]["json"] if {prev_var} else {{}}'
+            response_body = (
+                ctx.resolve_expr(str(params.get("responseBody", "")))
+                or f'{prev_var}[0]["json"] if {prev_var} else {{}}'
+            )
             code_lines = [
                 f"# Respond to Webhook with JSON",
                 f"{var}_response_body = {response_body}",
@@ -656,6 +677,7 @@ class RespondToWebhookHandler:
 # Stop and Error / No-op
 # ---------------------------------------------------------------------------
 
+
 @register("n8n-nodes-base.stopAndError")
 class StopAndErrorHandler:
     def generate(self, node: N8nNode, ctx: GenerationContext) -> IRNode:
@@ -663,7 +685,9 @@ class StopAndErrorHandler:
         prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
         params = node.parameters
-        error_msg = ctx.resolve_expr(str(params.get("errorMessage", "Workflow stopped by Stop and Error node")))
+        error_msg = ctx.resolve_expr(
+            str(params.get("errorMessage", "Workflow stopped by Stop and Error node"))
+        )
         code_lines = [
             f"raise RuntimeError({error_msg})",
             f"{var}_output = {prev_var}",
@@ -689,7 +713,7 @@ class NoOpHandler:
         var = _safe_var(node.name)
         prev_var = ctx.var_context.current_var()
         ctx.register_node_var(node.name, var)
-        
+
         return IRNode(
             node_id=node.id,
             node_name=node.name,

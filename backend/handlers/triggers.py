@@ -91,12 +91,16 @@ class ScheduleTriggerHandler:
 
         rule = params.get("rule", {}) or {}
         interval_raw = rule.get("interval", [{}])
-        interval = interval_raw[0] if isinstance(interval_raw, list) and interval_raw else {}
+        interval = (
+            interval_raw[0] if isinstance(interval_raw, list) and interval_raw else {}
+        )
 
         field_val = interval.get("field", "hours")
         trigger_at_hour = interval.get("triggerAtHour", 0)
         trigger_at_minute = interval.get("triggerAtMinute", 0)
-        interval_count = interval.get("hoursInterval", interval.get("minutesInterval", 1))
+        interval_count = interval.get(
+            "hoursInterval", interval.get("minutesInterval", 1)
+        )
 
         if field_val == "cronExpression":
             cron_expr = interval.get("expression", "0 * * * *")
@@ -186,7 +190,11 @@ class WebhookTriggerHandler:
         params = node.parameters
 
         method_raw = str(params.get("httpMethod", "POST")).strip().upper()
-        method = method_raw.lower() if method_raw.lower() in {"get", "post", "put", "patch", "delete"} else "post"
+        method = (
+            method_raw.lower()
+            if method_raw.lower() in {"get", "post", "put", "patch", "delete"}
+            else "post"
+        )
         path_raw = str(params.get("path", "") or _safe_var(node.name))
         path = _safe_path(path_raw)
         response_mode = params.get("responseMode", "lastNode")

@@ -13,9 +13,11 @@ env/
 node_modules/
 dist/
 build/
+*.tsbuildinfo
 .npm/
 yarn-error.log
 package-lock.json
+!frontend/package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
