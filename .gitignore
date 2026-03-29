@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.python-version
+
+# Node
+node_modules/
+dist/
+build/
+.npm/
+yarn-error.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# n8n2py frontend/vite
+n8n2py/frontend/node_modules/
+n8n2py/frontend/dist/
+n8n2py/frontend/.env
+n8n2py/frontend/.env.local
+n8n2py/frontend/.env.*.local
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+**/docker-compose.override.yml
+**/Dockerfile.*
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Misc
+*.db
+*.sqlite
+.env
